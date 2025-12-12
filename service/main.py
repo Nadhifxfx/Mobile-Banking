@@ -1,8 +1,8 @@
 """
-E-Banking Service Layer - Main Application Entry Point
+Mobile Banking Service Layer - Main Application Entry Point
 FastAPI REST API for direct database operations
 
-Author: E-Banking Team
+Author: Mobile Banking Team
 Date: 2025-12-12
 """
 from fastapi import FastAPI
@@ -13,8 +13,8 @@ from controllers import customer_controller, account_controller, transaction_con
 
 # Initialize FastAPI app
 app = FastAPI(
-    title="E-Banking Service Layer",
-    description="REST API untuk operasi database E-Banking System. "
+    title="Mobile Banking Service Layer",
+    description="REST API untuk operasi database Mobile Banking System. "
                 "Service layer ini berinteraksi langsung dengan database "
                 "dan dipanggil oleh Middleware layer.",
     version="1.0.0",
@@ -44,7 +44,7 @@ def on_startup():
     Event yang dijalankan saat aplikasi start
     Initialize database tables
     """
-    print("🚀 Starting E-Banking Service Layer...")
+    print("🚀 Starting Mobile Banking Service Layer...")
     print("📦 Initializing database...")
     init_db()
     print("✅ Database initialized successfully!")
@@ -57,10 +57,10 @@ def root():
     Root endpoint - Health check
     """
     return {
-        "service": "E-Banking Service Layer",
+        "service": "Mobile Banking Service Layer",
         "status": "running",
         "version": "1.0.0",
-        "description": "REST API untuk operasi database E-Banking",
+        "description": "REST API untuk operasi database Mobile Banking",
         "endpoints": {
             "customer": "/service/customer",
             "account": "/service/account",
@@ -81,7 +81,7 @@ def health_check():
     """
     return {
         "status": "healthy",
-        "service": "E-Banking Service Layer",
+        "service": "Mobile Banking Service Layer",
         "database": "connected"
     }
 

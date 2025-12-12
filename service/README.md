@@ -1,6 +1,6 @@
-# E-Banking Service Layer
+# Mobile Banking Service Layer
 
-REST API Service untuk operasi database E-Banking System. Service layer ini berinteraksi langsung dengan PostgreSQL database dan menyediakan endpoint yang digunakan oleh Middleware layer.
+REST API Service untuk operasi database Mobile Banking System. Service layer ini berinteraksi langsung dengan PostgreSQL database dan menyediakan endpoint yang digunakan oleh Middleware layer.
 
 ## 🏗 Arsitektur
 
@@ -230,7 +230,7 @@ service/
 
 ## 📝 License
 
-E-Banking Service Layer - Internal Project
+Mobile Banking Service Layer - Internal Project
 
 ---
 

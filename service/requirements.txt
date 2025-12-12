@@ -1,4 +1,4 @@
-# E-Banking Service Layer - Python Dependencies
+# Mobile Banking Service Layer - Python Dependencies
 # Install with: pip install -r requirements.txt
 
 # FastAPI Framework
