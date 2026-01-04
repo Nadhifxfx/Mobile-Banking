@@ -1,0 +1,61 @@
+# Mobile Banking System - .gitignore
+
+# ===== GENERAL =====
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+*.temp
+.env
+
+# ===== MOBILE (Flutter) =====
+mobile/.dart_tool/
+mobile/.flutter-plugins
+mobile/.flutter-plugins-dependencies
+mobile/.packages
+mobile/build/
+mobile/.pub-cache/
+mobile/.pub/
+mobile/ios/Pods/
+mobile/ios/.symlinks/
+mobile/android/.gradle/
+mobile/android/app/build/
+mobile/web/build/
+mobile/windows/flutter/ephemeral/
+
+# ===== MIDDLEWARE (Node.js) =====
+middleware/node_modules/
+middleware/.env
+middleware/npm-debug.log
+middleware/yarn-error.log
+middleware/package-lock.json
+
+# ===== SERVICE LAYER (Python) =====
+service/__pycache__/
+service/**/__pycache__/
+service/*.pyc
+service/.env
+service/venv/
+service/.venv/
+service/env/
+service/.pytest_cache/
+service/.coverage
+service/htmlcov/
+service/*.db
+service/*.db-shm
+service/*.db-wal
+
+# ===== IDE =====
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ===== OS =====
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+ehthumbs.db
+Desktop.ini
