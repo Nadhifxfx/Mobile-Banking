@@ -7,7 +7,7 @@ const express = require('express');
 const router = express.Router();
 const { body, validationResult } = require('express-validator');
 const serviceLayer = require('../services/serviceLayerClient');
-const authenticate = require('../middleware/authenticate');
+const authenticate = require('../authenticate');
 
 // All routes require authentication
 router.use(authenticate);

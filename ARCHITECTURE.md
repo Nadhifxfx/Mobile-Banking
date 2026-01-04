@@ -7,25 +7,26 @@ Sistem Mobile Banking ini menggunakan arsitektur 3-tier:
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                      MOBILE APP LAYER                        │
-│  (Flutter/React Native/Android/iOS - Port: Mobile Device)   │
+│            (Flutter + Dart - Port: Mobile Device)            │
 │                                                              │
 │  - User Interface (Login, Transfer, Cek Saldo, dll)        │
 │  - Input Validation                                         │
-│  - Session Management                                       │
+│  - Session Management & JWT Token Storage                   │
 │  - Offline Caching                                          │
+│  - Material Design UI & Custom Widgets                      │
 └──────────────────────┬──────────────────────────────────────┘
                        │ HTTP/HTTPS
                        │ REST API Calls
                        ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                    MIDDLEWARE LAYER                          │
-│         (Node.js/Express/FastAPI - Port: 8000)              │
+│                    MIDDLEWARE LAYER ✅                       │
+│            (Node.js + Express - Port: 3000) - SUDAH ADA!    │
 │                                                              │
 │  - Authentication & Authorization (JWT Token)               │
 │  - Business Logic & Validation                              │
 │  - Transaction Processing                                   │
 │  - API Gateway / Routing                                    │
-│  - Rate Limiting & Security                                 │
+│  - Rate Limiting & Security (Helmet + express-rate-limit)  │
 │  - Call Service Layer untuk database operations             │
 └──────────────────────┬──────────────────────────────────────┘
                        │ HTTP
@@ -66,14 +67,30 @@ Sistem Mobile Banking ini menggunakan arsitektur 3-tier:
   - Repository Pattern
   - Swagger Documentation
 
+- ✅ **MIDDLEWARE LAYER** (Port 3000) - **COMPLETE!**
+  - JWT Authentication & Authorization
+  - Business Logic & Validation
+  - Security (Helmet, Rate Limiting, CORS)
+  - Service Layer Integration
+  - Express Routes & Middleware
+
 - ✅ **DATABASE** (SQLite)
   - `ebanking.db`
   - Tables: m_customer, m_portfolio_account, t_transaction
   - Auto-created saat service start
 
-### **Yang Belum Ada:**
-- ❌ **MIDDLEWARE LAYER** (Port 8000) - **PERLU DIBUAT**
-- ❌ **MOBILE APP** - **PERLU DIBUAT**
+- ✅ **MOBILE APP** (Flutter) - **SETUP COMPLETE!**
+  - Flutter project initialized
+  - Ready untuk development
+  - Cross-platform (Android, iOS, Web)
+
+### **Yang Perlu Dikembangkan:**
+- 🔧 **MOBILE APP FEATURES** - **IN DEVELOPMENT**
+  - Login & Authentication UI
+  - Dashboard & Balance Display
+  - Transfer & Transaction Features
+  - Transaction History
+  - Profile Management
 
 ---
 
@@ -391,21 +408,31 @@ cd middleware
 pip install fastapi uvicorn python-jose bcrypt python-multipart
 ```
 
-### **3. Mobile App** ❌ **PERLU DIBUAT**
+### **3. Mobile App (Flutter)** ✅ **SUDAH DIBUAT**
 
-**Option A: Flutter**
 ```bash
-flutter create mobile_banking_app
+cd mobile
+flutter pub get
+flutter run
 ```
 
-**Option B: React Native**
-```bash
-npx react-native init MobileBankingApp
+**Struktur Flutter App:**
 ```
-
-**Option C: Android Native (Kotlin)**
-```bash
-# Android Studio → New Project → Empty Activity
+mobile/
+├── lib/
+│   ├── main.dart           # Entry point
+│   ├── screens/            # UI Screens
+│   │   ├── login_screen.dart
+│   │   ├── dashboard_screen.dart
+│   │   ├── transfer_screen.dart
+│   │   └── history_screen.dart
+│   ├── widgets/            # Reusable widgets
+│   ├── services/           # API services
+│   │   └── api_service.dart
+│   ├── models/             # Data models
+│   └── utils/              # Helpers & constants
+├── pubspec.yaml            # Dependencies
+└── android/ios/web/        # Platform-specific
 ```
 
 ---

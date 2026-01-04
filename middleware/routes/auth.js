@@ -9,7 +9,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
 const serviceLayer = require('../services/serviceLayerClient');
-const authenticate = require('../middleware/authenticate');
+const authenticate = require('../authenticate');
 
 // ===== Register =====
 

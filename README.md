@@ -6,14 +6,14 @@ Sistem Mobile Banking lengkap dengan 3 layer: Service Layer, Middleware, dan Mob
 
 ```
 ┌─────────────────┐
-│   Mobile App    │  (Cordova - Hybrid App)
-│  Port: Browser  │
-└────────┬────────┘
-         │ HTTP
+│   Mobile App    │  (Flutter - Cross Platform)
+│ Port: Device   │  - Material Design UI
+└────────┬────────┘  - Native Performance
+         │ HTTPS
          ↓
 ┌─────────────────┐
 │   Middleware    │  (Node.js + Express)
-│   Port: 8000    │  - JWT Authentication
+│   Port: 3000    │  - JWT Authentication
 └────────┬────────┘  - Business Logic
          │ HTTP      - Rate Limiting
          ↓
@@ -43,12 +43,13 @@ Mobile Banking/
 │   ├── routes/
 │   ├── middleware/
 │   └── services/
-└── mobile/              # Mobile App (Cordova)
-    ├── www/
-    │   ├── index.html
-    │   ├── css/
-    │   └── js/
-    └── config.xml
+└── mobile/              # Mobile App (Flutter)
+    ├── lib/
+    │   ├── main.dart
+    │   ├── screens/
+    │   ├── widgets/
+    │   └── services/
+    └── pubspec.yaml
 ```
 
 ## 🚀 Quick Start - Jalankan Semua Sekaligus
@@ -65,8 +66,8 @@ start-all.bat
 
 Script akan membuka 3 terminal terpisah:
 1. **Service Layer** - Port 8001
-2. **Middleware** - Port 8000  
-3. **Mobile App** - Browser
+2. **Middleware** - Port 3000  
+3. **Mobile App** - Flutter (development mode)
 
 ## 🔧 Manual Setup (per Layer)
 
@@ -94,12 +95,19 @@ npm start
 
 ```bash
 cd mobile
-npm install
-cordova platform add browser
-cordova run browser
+flutter pub get
+flutter run
 ```
 
-**App:** Otomatis buka di browser
+**Platform Options:**
+- `flutter run -d chrome` - Run di web browser
+- `flutter run -d windows` - Run di Windows desktop
+- `flutter run` - Run di emulator/device yang tersambung
+
+**Build APK:**
+```bash
+flutter build apk --release
+```
 
 ## 📱 Fitur Aplikasi
 
@@ -159,8 +167,8 @@ Import collection dari `service/Mobile_Banking_Service.postman_collection.json`
 | Layer         | Port | URL                      |
 |---------------|------|--------------------------|
 | Service       | 8001 | http://localhost:8001    |
-| Middleware    | 8000 | http://localhost:8000    |
-| Mobile (Dev)  | Auto | Browser auto-open        |
+| Middleware    | 3000 | http://localhost:3000    |
+| Mobile (Dev)  | Auto | Flutter hot reload       |
 
 ## 📚 Documentation
 
@@ -207,18 +215,32 @@ taskkill /PID <PID> /F
 ### Android APK
 ```bash
 cd mobile
-cordova platform add android
-cordova build android --release
+flutter build apk --release
 ```
 
-APK location: `mobile/platforms/android/app/build/outputs/apk/`
+APK location: `mobile/build/app/outputs/flutter-apk/app-release.apk`
+
+### Android App Bundle (untuk Play Store)
+```bash
+flutter build appbundle --release
+```
 
 ### iOS (Mac only)
 ```bash
-cd mobile
-cordova platform add ios
-cordova build ios
+flutter build ios --release
 ```
+
+### Windows Desktop
+```bash
+flutter build windows --release
+```
+
+### Web
+```bash
+flutter build web --release
+```
+
+Output: `mobile/build/web/`
 
 ## 🔄 Development Workflow
 

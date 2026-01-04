@@ -1,6 +1,6 @@
 /**
  * Mobile Banking Middleware Server
- * Port: 8000
+ * Port: 3000
  * 
  * Handles authentication, business logic, and routes requests to Service Layer
  */
@@ -19,7 +19,7 @@ const transactionRoutes = require('./routes/transaction');
 const customerRoutes = require('./routes/customer');
 
 const app = express();
-const PORT = process.env.PORT || 8000;
+const PORT = process.env.PORT || 3000;
 
 // ===== Middleware Configuration =====
 
