@@ -21,11 +21,51 @@ class ApiService {
     await prefs.setBool(ApiConstants.isLoggedInKey, true);
   }
 
+  // Save user data
+  Future<void> saveUserData(Map<String, dynamic> userData) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('customer_id', userData['id'] ?? 0);
+    await prefs.setString('customer_name', userData['name'] ?? '');
+    await prefs.setString('customer_username', userData['username'] ?? '');
+    await prefs.setString('customer_email', userData['email'] ?? '');
+    await prefs.setString('customer_phone', userData['phone'] ?? '');
+    await prefs.setString('customer_cif', userData['cif_number'] ?? '');
+  }
+
+  // Get user data
+  Future<Map<String, dynamic>?> getUserData() async {
+    final prefs = await SharedPreferences.getInstance();
+    final customerId = prefs.getInt('customer_id');
+    
+    if (customerId == null) return null;
+    
+    return {
+      'id': customerId,
+      'name': prefs.getString('customer_name') ?? '',
+      'username': prefs.getString('customer_username') ?? '',
+      'email': prefs.getString('customer_email') ?? '',
+      'phone': prefs.getString('customer_phone') ?? '',
+      'cif_number': prefs.getString('customer_cif') ?? '',
+    };
+  }
+
+  // Remove user data (logout)
+  Future<void> removeUserData() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('customer_id');
+    await prefs.remove('customer_name');
+    await prefs.remove('customer_username');
+    await prefs.remove('customer_email');
+    await prefs.remove('customer_phone');
+    await prefs.remove('customer_cif');
+  }
+
   // Remove token (logout)
   Future<void> removeToken() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(ApiConstants.tokenKey);
     await prefs.setBool(ApiConstants.isLoggedInKey, false);
+    await removeUserData();
   }
 
   // Get headers with JWT token
@@ -60,6 +100,10 @@ class ApiService {
         final data = jsonDecode(response.body);
         if (data['token'] != null) {
           await saveToken(data['token']);
+        }
+        // Save customer data
+        if (data['customer'] != null) {
+          await saveUserData(data['customer']);
         }
         return data;
       } else {

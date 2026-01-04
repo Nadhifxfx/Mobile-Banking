@@ -30,21 +30,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
     });
 
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString(ApiConstants.tokenKey);
+      // Get user data from SharedPreferences
+      _userData = await _apiService.getUserData();
       
-      if (token == null) {
-        throw Exception('Not authenticated');
+      if (_userData == null) {
+        throw Exception('User data not found. Please login again.');
       }
-
-      // Get user data from token or make API call to verify endpoint
-      // For now, we'll use stored data
-      final username = prefs.getString(ApiConstants.usernameKey) ?? 'User';
       
       setState(() {
-        _userData = {
-          'username': username,
-        };
         _isLoading = false;
       });
     } catch (e) {
@@ -133,7 +126,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           radius: 50,
                           backgroundColor: AppColors.lightBlue,
                           child: Text(
-                            _userData?['username']?.substring(0, 1).toUpperCase() ?? 'U',
+                            _userData?['name']?.substring(0, 1).toUpperCase() ?? 'U',
                             style: const TextStyle(
                               fontSize: 40,
                               fontWeight: FontWeight.bold,
@@ -144,7 +137,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        _userData?['username'] ?? 'User',
+                        _userData?['name'] ?? 'User',
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 24,
@@ -194,9 +187,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               children: [
                                 _buildInfoItem(
                                   icon: Icons.person_outline,
+                                  label: 'Nama Lengkap',
+                                  value: _userData?['name'] ?? '-',
+                                  color: AppColors.primaryBlue,
+                                ),
+                                const SizedBox(height: 8),
+                                _buildInfoItem(
+                                  icon: Icons.account_circle_outlined,
                                   label: 'Username',
                                   value: _userData?['username'] ?? '-',
                                   color: AppColors.primaryBlue,
+                                ),
+                                const SizedBox(height: 8),
+                                _buildInfoItem(
+                                  icon: Icons.credit_card,
+                                  label: 'CIF Number',
+                                  value: _userData?['cif_number'] ?? '-',
+                                  color: AppColors.secondaryBlue,
                                 ),
                               ],
                             ),

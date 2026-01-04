@@ -22,7 +22,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
   double _totalBalance = 0;
   List<dynamic> _accounts = [];
   String? _error;
+  Map<String, dynamic>? _userData;
   String _userName = '';
+  String _cifNumber = '';
   int _currentIndex = 0;
 
   @override
@@ -33,10 +35,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Future<void> _loadUserName() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _userName = prefs.getString('user_name') ?? 'User';
-    });
+    final userData = await _apiService.getUserData();
+    if (userData != null) {
+      setState(() {
+        _userName = userData['name'] ?? 'User';
+        _cifNumber = userData['cif_number'] ?? '';
+      });
+    }
   }
 
   Future<void> _loadData() async {
