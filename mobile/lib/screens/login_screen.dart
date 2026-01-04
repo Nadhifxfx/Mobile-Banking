@@ -345,11 +345,11 @@ class _LoginScreenState extends State<LoginScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text(
-                      'Login',
+                     'Login',
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
-                        color: AppColors.darkGrey,
+                        color: Color.fromARGB(255, 1, 89, 253),
                       ),
                     ),
                     IconButton(
@@ -452,7 +452,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       _handleLogin();
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primaryBlue,
+                      backgroundColor: const Color.fromARGB(255, 168, 206, 244),
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
