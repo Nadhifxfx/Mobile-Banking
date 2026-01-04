@@ -73,24 +73,22 @@ class ApiService {
 
   // Register
   Future<Map<String, dynamic>> register({
-    required String customerName,
+    required String name,
     required String username,
     required String pin,
     required String email,
     required String phone,
-    required String cifNumber,
   }) async {
     try {
       final response = await http.post(
         Uri.parse('${ApiConstants.middlewareBaseUrl}${ApiConstants.registerEndpoint}'),
         headers: await getHeaders(needsAuth: false),
         body: jsonEncode({
-          'customer_name': customerName,
+          'customer_name': name,
           'customer_username': username,
           'customer_pin': pin,
           'customer_email': email,
           'customer_phone': phone,
-          'cif_number': cifNumber,
         }),
       );
 
@@ -98,10 +96,22 @@ class ApiService {
         return jsonDecode(response.body);
       } else {
         final error = jsonDecode(response.body);
-        throw Exception(error['message'] ?? 'Registration failed');
+        // Get detailed error message
+        String errorMessage = 'Registration failed';
+        if (error['message'] != null) {
+          errorMessage = error['message'];
+        } else if (error['error'] != null) {
+          errorMessage = error['error'];
+        } else if (error['details'] != null && error['details'] is List) {
+          errorMessage = (error['details'] as List).map((e) => e['msg']).join(', ');
+        }
+        throw Exception(errorMessage);
       }
     } catch (e) {
-      throw Exception('Connection error: $e');
+      if (e.toString().contains('Exception:')) {
+        rethrow;
+      }
+      throw Exception('Registration error: $e');
     }
   }
 

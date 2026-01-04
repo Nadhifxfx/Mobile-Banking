@@ -25,8 +25,10 @@ class CustomerRepository:
         """
         new_customer = Customer(**customer_data)
         db.add(new_customer)
-        db.commit()
-        db.refresh(new_customer)
+        db.flush()  # Flush to get ID before commit
+        db.commit()  # Commit to database immediately
+        db.refresh(new_customer)  # Refresh to get updated data
+        print(f"✅ Customer created in DB: ID={new_customer.id}, Username={new_customer.customer_username}")
         return new_customer
 
     @staticmethod

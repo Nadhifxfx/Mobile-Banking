@@ -17,23 +17,28 @@ router.post('/register',
   [
     body('customer_name').notEmpty().withMessage('Name is required'),
     body('customer_username').notEmpty().withMessage('Username is required').isLength({ min: 4 }).withMessage('Username must be at least 4 characters'),
-    body('customer_pin').notEmpty().withMessage('PIN is required').isLength({ min: 6, max: 6 }).withMessage('PIN must be exactly 6 digits'),
+    body('customer_pin').notEmpty().withMessage('PIN is required').isString().isLength({ min: 6, max: 6 }).withMessage('PIN must be exactly 6 digits'),
     body('customer_email').isEmail().withMessage('Valid email is required'),
-    body('customer_phone').notEmpty().withMessage('Phone number is required'),
-    body('cif_number').notEmpty().withMessage('CIF number is required')
+    body('customer_phone').notEmpty().withMessage('Phone number is required').isString()
   ],
   async (req, res) => {
     try {
       // Validate input
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
+        console.log('Validation errors:', errors.array());
         return res.status(400).json({ 
           error: 'Validation Error',
-          details: errors.array() 
+          message: errors.array().map(e => e.msg).join(', '),
+          details: errors.array()
         });
       }
 
-      const { customer_name, customer_username, customer_pin, customer_email, customer_phone, cif_number } = req.body;
+      const { customer_name, customer_username, customer_pin, customer_email, customer_phone } = req.body;
+
+      // Auto-generate CIF number
+      const timestamp = Date.now();
+      const cif_number = `CIF${timestamp}`;
 
       // Hash PIN
       const hashedPin = await bcrypt.hash(customer_pin, parseInt(process.env.BCRYPT_ROUNDS) || 10);

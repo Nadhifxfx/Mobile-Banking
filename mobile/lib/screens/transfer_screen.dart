@@ -1,16 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../services/api_service.dart';
+import '../utils/constants.dart';
 
 class TransferScreen extends StatefulWidget {
-  final List<dynamic> accounts;
-  final VoidCallback onSuccess;
-
-  const TransferScreen({
-    super.key,
-    required this.accounts,
-    required this.onSuccess,
-  });
+  const TransferScreen({super.key});
 
   @override
   State<TransferScreen> createState() => _TransferScreenState();
@@ -24,13 +18,30 @@ class _TransferScreenState extends State<TransferScreen> {
   final _apiService = ApiService();
 
   String? _selectedFromAccount;
-  bool _isLoading = false;
+  bool _isLoading = true;
+  bool _isSubmitting = false;
+  List<dynamic> _accounts = [];
 
   @override
   void initState() {
     super.initState();
-    if (widget.accounts.isNotEmpty) {
-      _selectedFromAccount = widget.accounts[0]['account_number'];
+    _loadAccounts();
+  }
+
+  Future<void> _loadAccounts() async {
+    try {
+      final balanceData = await _apiService.getBalance();
+      setState(() {
+        _accounts = balanceData['accounts'] ?? [];
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() => _isLoading = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error loading accounts: $e')),
+        );
+      }
     }
   }
 
@@ -45,7 +56,7 @@ class _TransferScreenState extends State<TransferScreen> {
   Future<void> _handleTransfer() async {
     if (!_formKey.currentState!.validate()) return;
 
-    setState(() => _isLoading = true);
+    setState(() => _isSubmitting = true);
 
     try {
       final amount = double.parse(_amountController.text);
@@ -66,7 +77,6 @@ class _TransferScreenState extends State<TransferScreen> {
             backgroundColor: Colors.green,
           ),
         );
-        widget.onSuccess();
         Navigator.pop(context);
       }
     } catch (e) {
@@ -74,22 +84,30 @@ class _TransferScreenState extends State<TransferScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(e.toString().replaceAll('Exception: ', '')),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.error,
           ),
         );
       }
     } finally {
       if (mounted) {
-        setState(() => _isLoading = false);
+        setState(() => _isSubmitting = false);
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Transfer')),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Transfer'),
+        backgroundColor: AppColors.primaryBlue,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -106,7 +124,7 @@ class _TransferScreenState extends State<TransferScreen> {
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.account_balance_wallet),
                 ),
-                items: widget.accounts.map((account) {
+                items: _accounts.map((account) {
                   return DropdownMenuItem<String>(
                     value: account['account_number'],
                     child: Text(
@@ -186,11 +204,11 @@ class _TransferScreenState extends State<TransferScreen> {
 
               // Transfer Button
               ElevatedButton(
-                onPressed: _isLoading ? null : _handleTransfer,
+                onPressed: _isSubmitting ? null : _handleTransfer,
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
-                child: _isLoading
+                child: _isSubmitting
                     ? const SizedBox(
                         height: 20,
                         width: 20,

@@ -23,7 +23,7 @@ if DATABASE_URL.startswith("sqlite"):
     engine = create_engine(
         DATABASE_URL,
         connect_args={"check_same_thread": False},  # Needed for SQLite
-        echo=False  # Set to True for SQL query logging
+        echo=True  # Enable SQL logging to see queries
     )
 else:
     engine = create_engine(
@@ -31,11 +31,16 @@ else:
         pool_pre_ping=True,
         pool_size=10,
         max_overflow=20,
-        echo=False  # Set to True for SQL query logging
+        echo=True  # Enable SQL logging
     )
 
-# Create SessionLocal class
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+# Create SessionLocal class with explicit commit behavior
+SessionLocal = sessionmaker(
+    autocommit=False,  # Manual commit required
+    autoflush=True,    # Auto flush before queries
+    bind=engine,
+    expire_on_commit=True  # Refresh objects after commit
+)
 
 # Create Base class for models
 Base = declarative_base()

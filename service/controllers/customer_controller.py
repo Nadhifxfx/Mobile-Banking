@@ -71,8 +71,23 @@ def register_customer(customer: CustomerCreate, db: Session = Depends(get_db)):
     Returns:
         Customer object yang baru dibuat
     """
+    print(f"\n{'='*50}")
+    print(f"📝 NEW CUSTOMER REGISTRATION REQUEST")
+    print(f"   Username: {customer.customer_username}")
+    print(f"   Name: {customer.customer_name}")
+    print(f"   Email: {customer.customer_email}")
+    print(f"   CIF: {customer.cif_number}")
+    print(f"{'='*50}\n")
+    
     customer_data = customer.dict()
     result = customer_service.create_customer(db, customer_data)
+    
+    print(f"\n{'='*50}")
+    print(f"✅ REGISTRATION SUCCESSFUL")
+    print(f"   Customer ID: {result['id']}")
+    print(f"   Username: {result['customer_username']}")
+    print(f"{'='*50}\n")
+    
     return result
 
 

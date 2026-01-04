@@ -19,7 +19,7 @@ const transactionRoutes = require('./routes/transaction');
 const customerRoutes = require('./routes/customer');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8000;
 
 // ===== Middleware Configuration =====
 
@@ -32,9 +32,18 @@ app.use(cors({
   credentials: true
 }));
 
-// Body parsers
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Body parsers with error handling
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Error handler for body parser
+app.use((err, req, res, next) => {
+  if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+    console.error('Bad JSON:', err);
+    return res.status(400).json({ error: 'Invalid JSON' });
+  }
+  next(err);
+});
 
 // Logging
 if (process.env.NODE_ENV === 'development') {
@@ -108,7 +117,7 @@ app.use((err, req, res, next) => {
 
 // ===== Start Server =====
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, '0.0.0.0', () => {
   console.log('🚀 Mobile Banking Middleware Server');
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   console.log(`📡 Server running on: http://localhost:${PORT}`);
@@ -117,6 +126,41 @@ app.listen(PORT, () => {
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   console.log('✅ Middleware ready to accept requests');
   console.log('📱 Mobile apps can now connect!');
+});
+
+server.on('error', (err) => {
+  console.error('❌ Server Error:', err.message);
+  if (err.code === 'EADDRINUSE') {
+    console.error(`Port ${PORT} is already in use`);
+  }
+});
+
+// Handle graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('SIGTERM signal received: closing HTTP server');
+  server.close(() => {
+    console.log('HTTP server closed');
+  });
+});
+
+process.on('SIGINT', () => {
+  console.log('\nSIGINT signal received: closing HTTP server');
+  server.close(() => {
+    console.log('HTTP server closed');
+    process.exit(0);
+  });
+});
+
+// Don't crash on unhandled errors - just log them
+process.on('uncaughtException', (err) => {
+  console.error('❌ Uncaught Exception:', err);
+  console.error('Stack:', err.stack);
+  // Don't exit - keep server running
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
+  // Don't exit - keep server running
 });
 
 module.exports = app;

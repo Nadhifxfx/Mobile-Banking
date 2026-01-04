@@ -27,23 +27,32 @@ class CustomerService:
         Raises:
             HTTPException: Jika username/email/cif sudah terdaftar
         """
+        print(f"🔍 Checking for existing username: {customer_data['customer_username']}")
+        
         # Validasi username belum dipakai
         existing_username = self.repository.get_by_username(db, customer_data["customer_username"])
         if existing_username:
+            print(f"❌ Username {customer_data['customer_username']} already exists")
             raise HTTPException(status_code=400, detail="Username sudah terdaftar")
         
         # Validasi email belum dipakai
         existing_email = self.repository.get_by_email(db, customer_data["customer_email"])
         if existing_email:
+            print(f"❌ Email {customer_data['customer_email']} already exists")
             raise HTTPException(status_code=400, detail="Email sudah terdaftar")
         
         # Validasi CIF belum dipakai
         existing_cif = self.repository.get_by_cif(db, customer_data["cif_number"])
         if existing_cif:
+            print(f"❌ CIF {customer_data['cif_number']} already exists")
             raise HTTPException(status_code=400, detail="CIF Number sudah terdaftar")
+        
+        print(f"✅ Validations passed, creating customer...")
         
         # Create customer
         customer = self.repository.create(db, customer_data)
+        
+        print(f"✅ Customer created successfully: {customer.customer_username}")
         
         return self._customer_to_dict(customer)
 

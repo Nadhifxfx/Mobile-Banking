@@ -1,16 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../services/api_service.dart';
+import '../utils/constants.dart';
 
 class WithdrawScreen extends StatefulWidget {
-  final List<dynamic> accounts;
-  final VoidCallback onSuccess;
-
-  const WithdrawScreen({
-    super.key,
-    required this.accounts,
-    required this.onSuccess,
-  });
+  const WithdrawScreen({super.key});
 
   @override
   State<WithdrawScreen> createState() => _WithdrawScreenState();
@@ -22,13 +16,33 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
   final _apiService = ApiService();
 
   String? _selectedAccount;
-  bool _isLoading = false;
+  bool _isLoading = true;
+  bool _isSubmitting = false;
+  List<dynamic> _accounts = [];
 
   @override
   void initState() {
     super.initState();
-    if (widget.accounts.isNotEmpty) {
-      _selectedAccount = widget.accounts[0]['account_number'];
+    _loadAccounts();
+  }
+
+  Future<void> _loadAccounts() async {
+    try {
+      final balanceData = await _apiService.getBalance();
+      setState(() {
+        _accounts = balanceData['accounts'] ?? [];
+        if (_accounts.isNotEmpty) {
+          _selectedAccount = _accounts[0]['account_number'];
+        }
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() => _isLoading = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error loading accounts: $e')),
+        );
+      }
     }
   }
 
@@ -41,7 +55,7 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
   Future<void> _handleWithdraw() async {
     if (!_formKey.currentState!.validate()) return;
 
-    setState(() => _isLoading = true);
+    setState(() => _isSubmitting = true);
 
     try {
       final amount = double.parse(_amountController.text);
@@ -58,7 +72,6 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
             backgroundColor: Colors.green,
           ),
         );
-        widget.onSuccess();
         Navigator.pop(context);
       }
     } catch (e) {
@@ -98,7 +111,7 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.account_balance_wallet),
                 ),
-                items: widget.accounts.map((account) {
+                items: _accounts.map((account) {
                   return DropdownMenuItem<String>(
                     value: account['account_number'],
                     child: Text(

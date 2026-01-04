@@ -24,16 +24,34 @@ class ApiConstants {
   static const String isLoggedInKey = 'is_logged_in';
 }
 
-/// App Colors
+/// App Colors - BRImo Inspired Professional Design
 class AppColors {
-  static const primaryBlue = Color(0xFF1976D2);
-  static const darkBlue = Color(0xFF0D47A1);
-  static const lightBlue = Color(0xFF64B5F6);
-  static const success = Color(0xFF4CAF50);
-  static const warning = Color(0xFFFFC107);
-  static const error = Color(0xFFE53935);
+  // Primary BRI Blue gradient colors
+  static const primaryBlue = Color(0xFF003D7A);
+  static const secondaryBlue = Color(0xFF0066CC);
+  static const lightBlue = Color(0xFF4A90E2);
+  static const accentBlue = Color(0xFF2196F3);
+  
+  // Accent colors
+  static const briOrange = Color(0xFFFF6B35);
+  static const success = Color(0xFF00BFA5);
+  static const warning = Color(0xFFFFA726);
+  static const error = Color(0xFFEF5350);
+  
+  // Neutral colors
+  static const darkGrey = Color(0xFF37474F);
   static const grey = Color(0xFF757575);
   static const lightGrey = Color(0xFFE0E0E0);
+  static const backgroundGrey = Color(0xFFF5F6FA);
+  static const white = Color(0xFFFFFFFF);
+  
+  // Gradient
+  static const gradientStart = primaryBlue;
+  static const gradientEnd = secondaryBlue;
+  
+  // Transaction colors
+  static const incomeGreen = Color(0xFF00C853);
+  static const expenseRed = Color(0xFFD32F2F);
 }
 
 /// Transaction Types
