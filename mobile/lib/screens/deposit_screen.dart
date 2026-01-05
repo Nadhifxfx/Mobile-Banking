@@ -249,7 +249,7 @@ class _DepositScreenState extends State<DepositScreen> {
           const Text('Rekening Tujuan', style: TextStyle(fontSize: 14, color: AppColors.grey, fontWeight: FontWeight.w500)),
           const SizedBox(height: 8),
           DropdownButtonFormField<String>(
-            value: _selectedAccount,
+            initialValue: _selectedAccount,
             decoration: InputDecoration(
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
               filled: true,

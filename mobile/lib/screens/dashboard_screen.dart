@@ -5,7 +5,6 @@ import '../services/api_service.dart';
 import '../utils/constants.dart';
 import 'transfer_screen.dart';
 import 'withdraw_screen.dart';
-import 'deposit_screen.dart';
 import 'profile_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -270,7 +269,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     _loadData();
                                     _loadSavedData();
                                   }), false),
-                                  _buildQuickAction(Icons.add_circle, 'Top Up', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DepositScreen())).then((_) => _loadData()), false),
                                   _buildQuickAction(Icons.atm, 'Setor & Tarik Tunai', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const WithdrawScreen())).then((_) => _loadData()), false),
                                 ],
                               ),
@@ -455,16 +453,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   children: [
                     const Text('Semua Transaksi', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.darkGrey)),
                     const SizedBox(height: 12),
-                    _buildTransactionItem(
-                      icon: Icons.add_circle,
-                      iconColor: Colors.green,
-                      title: 'Top Up Saldo',
-                      date: '5 Jan 2026, 08:30',
-                      amount: '+ Rp 500.000',
-                      amountColor: Colors.green,
-                      status: 'Sukses',
-                    ),
-                    const SizedBox(height: 8),
                     _buildTransactionItem(
                       icon: Icons.arrow_upward,
                       iconColor: AppColors.briOrange,

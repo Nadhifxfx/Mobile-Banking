@@ -333,7 +333,7 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
             const Text('Lokasi Pengambilan', style: TextStyle(fontSize: 14, color: AppColors.grey, fontWeight: FontWeight.w500)),
             const SizedBox(height: 8),
             DropdownButtonFormField<String>(
-              value: _selectedLocation,
+              initialValue: _selectedLocation,
               decoration: InputDecoration(
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                 filled: true,
@@ -372,7 +372,7 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
           Text('Rekening ${_transactionType == "deposit" ? "Tujuan" : "Sumber"}', style: const TextStyle(fontSize: 14, color: AppColors.grey, fontWeight: FontWeight.w500)),
           const SizedBox(height: 8),
           DropdownButtonFormField<String>(
-            value: _selectedAccount,
+            initialValue: _selectedAccount,
             decoration: InputDecoration(
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
               filled: true,
@@ -398,10 +398,24 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
             children: [
               _buildQuickAmount('50.000'),
               _buildQuickAmount('100.000'),
+              _buildQuickAmount('150.000'),
               _buildQuickAmount('200.000'),
+              _buildQuickAmount('250.000'),
+              _buildQuickAmount('300.000'),
+              _buildQuickAmount('350.000'),
+              _buildQuickAmount('400.000'),
+              _buildQuickAmount('450.000'),
               _buildQuickAmount('500.000'),
+              _buildQuickAmount('550.000'),
+              _buildQuickAmount('600.000'),
+              _buildQuickAmount('650.000'),
+              _buildQuickAmount('700.000'),
+              _buildQuickAmount('750.000'),
+              _buildQuickAmount('800.000'),
+              _buildQuickAmount('850.000'),
+              _buildQuickAmount('900.000'),
+              _buildQuickAmount('950.000'),
               _buildQuickAmount('1.000.000'),
-              _buildQuickAmount('2.000.000'),
             ],
           ),
         ],
@@ -423,7 +437,7 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
           borderRadius: BorderRadius.circular(8),
           border: Border.all(color: AppColors.primaryBlue.withOpacity(0.3)),
         ),
-        child: Text('Rp \$amount', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+        child: Text('Rp $amount', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
       ),
     );
   }
