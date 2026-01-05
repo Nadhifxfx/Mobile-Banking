@@ -6,6 +6,7 @@
 const express = require('express');
 const router = express.Router();
 const { body, validationResult } = require('express-validator');
+const bcrypt = require('bcryptjs');
 const serviceLayer = require('../services/serviceLayerClient');
 const authenticate = require('../authenticate');
 
@@ -24,6 +25,7 @@ router.post('/transfer',
       }
       return true;
     }),
+    body('pin').notEmpty().withMessage('PIN is required').isLength({ min: 6, max: 6 }).withMessage('PIN must be 6 digits'),
     body('description').optional()
   ],
   async (req, res) => {
@@ -38,9 +40,28 @@ router.post('/transfer',
       }
 
       const customer_id = req.user.customer_id;
-      const { from_account, to_account, amount, description = 'Transfer' } = req.body;
+      const { from_account, to_account, amount, pin, description = 'Transfer' } = req.body;
 
-      // 1. Verify source account ownership
+      // 1. Verify PIN
+      const customer = await serviceLayer.getCustomerById(customer_id);
+      
+      if (!customer || !customer.customer_pin) {
+        return res.status(500).json({
+          error: 'Server Error',
+          message: 'Customer data incomplete'
+        });
+      }
+      
+      const isValidPin = await bcrypt.compare(pin, customer.customer_pin);
+      
+      if (!isValidPin) {
+        return res.status(401).json({
+          error: 'Unauthorized',
+          message: 'PIN salah'
+        });
+      }
+
+      // 2. Verify source account ownership
       const sourceAccount = await serviceLayer.getAccountByNumber(from_account);
       if (sourceAccount.m_customer_id !== customer_id) {
         return res.status(403).json({
@@ -49,10 +70,10 @@ router.post('/transfer',
         });
       }
 
-      // 2. Verify destination account exists
+      // 3. Verify destination account exists
       const destAccount = await serviceLayer.getAccountByNumber(to_account);
 
-      // 3. Check balance
+      // 4. Check balance
       const balance = await serviceLayer.getAccountBalance(from_account);
       if (balance.available_balance < amount) {
         return res.status(400).json({
@@ -61,13 +82,14 @@ router.post('/transfer',
         });
       }
 
-      // 4. Debit source account
+      // 5. Debit source account
       await serviceLayer.debitAccount(from_account, amount);
 
-      // 5. Credit destination account
+      // 6. Credit destination account
       await serviceLayer.creditAccount(to_account, amount);
 
-      // 6. Record transaction
+      // 7. Record transaction
+      // 7. Record transaction
       const transaction = await serviceLayer.createTransaction({
         m_customer_id: customer_id,
         transaction_type: 'TR',
@@ -78,7 +100,7 @@ router.post('/transfer',
         description: description
       });
 
-      // 7. Get new balance
+      // 8. Get new balance
       const newBalance = await serviceLayer.getAccountBalance(from_account);
 
       res.json({
@@ -117,7 +139,8 @@ router.post('/withdraw',
         throw new Error('Amount must be greater than 0');
       }
       return true;
-    })
+    }),
+    body('pin').notEmpty().withMessage('PIN is required').isLength({ min: 6, max: 6 }).withMessage('PIN must be 6 digits')
   ],
   async (req, res) => {
     try {
@@ -131,9 +154,28 @@ router.post('/withdraw',
       }
 
       const customer_id = req.user.customer_id;
-      const { account_number, amount } = req.body;
+      const { account_number, amount, pin } = req.body;
 
-      // 1. Verify account ownership
+      // 1. Verify PIN
+      const customer = await serviceLayer.getCustomerById(customer_id);
+      
+      if (!customer || !customer.customer_pin) {
+        return res.status(500).json({
+          error: 'Server Error',
+          message: 'Customer data incomplete'
+        });
+      }
+      
+      const isValidPin = await bcrypt.compare(pin, customer.customer_pin);
+      
+      if (!isValidPin) {
+        return res.status(401).json({
+          error: 'Unauthorized',
+          message: 'PIN salah'
+        });
+      }
+
+      // 2. Verify account ownership
       const account = await serviceLayer.getAccountByNumber(account_number);
       if (account.m_customer_id !== customer_id) {
         return res.status(403).json({
@@ -200,7 +242,8 @@ router.post('/deposit',
         throw new Error('Amount must be greater than 0');
       }
       return true;
-    })
+    }),
+    body('pin').notEmpty().withMessage('PIN is required').isLength({ min: 6, max: 6 }).withMessage('PIN must be 6 digits')
   ],
   async (req, res) => {
     try {
@@ -214,9 +257,28 @@ router.post('/deposit',
       }
 
       const customer_id = req.user.customer_id;
-      const { account_number, amount } = req.body;
+      const { account_number, amount, pin } = req.body;
 
-      // 1. Verify account ownership
+      // 1. Verify PIN
+      const customer = await serviceLayer.getCustomerById(customer_id);
+      
+      if (!customer || !customer.customer_pin) {
+        return res.status(500).json({
+          error: 'Server Error',
+          message: 'Customer data incomplete'
+        });
+      }
+      
+      const isValidPin = await bcrypt.compare(pin, customer.customer_pin);
+      
+      if (!isValidPin) {
+        return res.status(401).json({
+          error: 'Unauthorized',
+          message: 'PIN salah'
+        });
+      }
+
+      // 2. Verify account ownership
       const account = await serviceLayer.getAccountByNumber(account_number);
       if (account.m_customer_id !== customer_id) {
         return res.status(403).json({

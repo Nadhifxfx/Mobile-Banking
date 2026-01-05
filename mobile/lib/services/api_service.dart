@@ -201,6 +201,7 @@ class ApiService {
     required String fromAccount,
     required String toAccount,
     required double amount,
+    required String pin,
     String? description,
   }) async {
     try {
@@ -211,6 +212,7 @@ class ApiService {
           'from_account': fromAccount,
           'to_account': toAccount,
           'amount': amount,
+          'pin': pin,
           'description': description ?? 'Transfer',
         }),
       );
@@ -230,6 +232,7 @@ class ApiService {
   Future<Map<String, dynamic>> withdraw({
     required String accountNumber,
     required double amount,
+    required String pin,
   }) async {
     try {
       final response = await http.post(
@@ -238,6 +241,7 @@ class ApiService {
         body: jsonEncode({
           'account_number': accountNumber,
           'amount': amount,
+          'pin': pin,
         }),
       );
 
@@ -256,6 +260,7 @@ class ApiService {
   Future<Map<String, dynamic>> deposit({
     required String accountNumber,
     required double amount,
+    required String pin,
   }) async {
     try {
       final response = await http.post(
@@ -264,6 +269,7 @@ class ApiService {
         body: jsonEncode({
           'account_number': accountNumber,
           'amount': amount,
+          'pin': pin,
         }),
       );
 
