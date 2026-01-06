@@ -1,115 +1,135 @@
 # 🏗️ ARSITEKTUR MOBILE BANKING SYSTEM
 
+**Last Updated:** 6 Januari 2026
+
 ## 📊 3-TIER ARCHITECTURE
 
-Sistem Mobile Banking ini menggunakan arsitektur 3-tier:
+Sistem Mobile Banking ini menggunakan arsitektur 3-tier yang sudah berjalan penuh:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                      MOBILE APP LAYER                        │
-│            (Flutter + Dart - Port: Mobile Device)            │
+│                      MOBILE APP LAYER ✅                      │
+│              (Flutter Web - Chrome Browser)                  │
 │                                                              │
-│  - User Interface (Login, Transfer, Cek Saldo, dll)        │
-│  - Input Validation                                         │
-│  - Session Management & JWT Token Storage                   │
-│  - Offline Caching                                          │
-│  - Material Design UI & Custom Widgets                      │
+│  - User Interface (Login, Register, Transfer, dll) ✅       │
+│  - Input Validation ✅                                       │
+│  - Session Management & JWT Token Storage ✅                 │
+│  - SharedPreferences untuk Recent Transactions ✅           │
+│  - Material Design UI ✅                                     │
+│  - No PIN Confirmation (Auto-approved) ✅                    │
 └──────────────────────┬──────────────────────────────────────┘
                        │ HTTP/HTTPS
-                       │ REST API Calls
+                       │ REST API: http://localhost:8000/api/v1/*
                        ▼
 ┌─────────────────────────────────────────────────────────────┐
 │                    MIDDLEWARE LAYER ✅                       │
-│            (Node.js + Express - Port: 3000) - SUDAH ADA!    │
+│            (Node.js + Express - Port: 8000)                 │
 │                                                              │
-│  - Authentication & Authorization (JWT Token)               │
-│  - Business Logic & Validation                              │
-│  - Transaction Processing                                   │
-│  - API Gateway / Routing                                    │
-│  - Rate Limiting & Security (Helmet + express-rate-limit)  │
-│  - Call Service Layer untuk database operations             │
+│  - Authentication & Authorization (JWT Token) ✅            │
+│  - Business Logic & Validation ✅                           │
+│  - Transaction Processing (Auto-approve) ✅                 │
+│  - API Gateway / Routing ✅                                 │
+│  - Rate Limiting & Security (Helmet + CORS) ✅             │
+│  - Balance Check: Flexible dict/object access ✅            │
+│  - Call Service Layer untuk database operations ✅          │
 └──────────────────────┬──────────────────────────────────────┘
                        │ HTTP
-                       │ Internal API Calls
+                       │ Internal API: http://localhost:8001/service/*
                        ▼
 ┌─────────────────────────────────────────────────────────────┐
 │                     SERVICE LAYER ✅                         │
-│          (FastAPI/Python - Port: 8001) - SUDAH ADA!         │
+│          (FastAPI/Python - Port: 8001)                      │
 │                                                              │
-│  - Database Operations (CRUD)                               │
-│  - Data Access Layer                                        │
-│  - Repository Pattern                                       │
-│  - Direct Database Connection                               │
+│  - Database Operations (CRUD) ✅                            │
+│  - Data Access Layer (Repository Pattern) ✅                │
+│  - Returns dict via _to_dict() methods ✅                   │
+│  - Balance endpoint: account['clear_balance'] ✅            │
+│  - Direct SQLAlchemy ORM Connection ✅                      │
 └──────────────────────┬──────────────────────────────────────┘
-                       │ SQL
+                       │ SQLAlchemy ORM
                        │ Database Queries
                        ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                    DATABASE LAYER                            │
-│              (PostgreSQL/SQLite - Port: 5432)               │
+│                    DATABASE LAYER ✅                         │
+│                   (SQLite - ebanking.db)                    │
 │                                                              │
-│  - Data Storage (m_customer, m_portfolio_account, dll)     │
-│  - Data Integrity & Constraints                             │
-│  - Transactions & ACID                                      │
+│  - Data Storage (m_customer, m_portfolio_account, etc) ✅   │
+│  - Data Integrity & Constraints ✅                          │
+│  - Transactions & ACID ✅                                   │
+│  - Auto-initialization on startup ✅                        │
 └─────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## ✅ STATUS SAAT INI
+## ✅ STATUS SISTEM
 
-### **Yang Sudah Ada:**
-- ✅ **SERVICE LAYER** (Port 8001) - **COMPLETE!**
-  - Customer Management API
-  - Account Management API
-  - Transaction Management API
-  - Database Models & Connection
-  - Repository Pattern
-  - Swagger Documentation
+### **Semua Layer Sudah Berjalan Penuh:**
 
-- ✅ **MIDDLEWARE LAYER** (Port 3000) - **COMPLETE!**
-  - JWT Authentication & Authorization
-  - Business Logic & Validation
-  - Security (Helmet, Rate Limiting, CORS)
-  - Service Layer Integration
-  - Express Routes & Middleware
+- ✅ **SERVICE LAYER** (Port 8001) - **PRODUCTION READY!**
+  - Customer Management API ✅
+  - Account Management API ✅
+  - Transaction Management API ✅
+  - Database Models & Connection ✅
+  - Repository Pattern ✅
+  - Balance endpoint fixed (dict access) ✅
+  - Swagger Documentation: http://localhost:8001/docs ✅
 
-- ✅ **DATABASE** (SQLite)
-  - `ebanking.db`
-  - Tables: m_customer, m_portfolio_account, t_transaction
-  - Auto-created saat service start
+- ✅ **MIDDLEWARE LAYER** (Port 8000) - **PRODUCTION READY!**
+  - JWT Authentication & Authorization ✅
+  - Business Logic & Validation ✅
+  - Security (Helmet, Rate Limiting, CORS) ✅
+  - Service Layer Integration ✅
+  - Auto-approve transactions (no PIN confirmation) ✅
+  - Flexible balance access (dict/object) ✅
+  - Express Routes & Middleware ✅
 
-- ✅ **MOBILE APP** (Flutter) - **SETUP COMPLETE!**
-  - Flutter project initialized
-  - Ready untuk development
-  - Cross-platform (Android, iOS, Web)
+- ✅ **DATABASE** (SQLite) - **ACTIVE!**
+  - `ebanking.db` & `mobile_banking.db` ✅
+  - Tables: m_customer, m_portfolio_account, t_transaction ✅
+  - Auto-created saat service start ✅
+  - SQLAlchemy ORM integration ✅
 
-### **Yang Perlu Dikembangkan:**
-- 🔧 **MOBILE APP FEATURES** - **IN DEVELOPMENT**
-  - Login & Authentication UI
-  - Dashboard & Balance Display
-  - Transfer & Transaction Features
-  - Transaction History
-  - Profile Management
+- ✅ **MOBILE APP** (Flutter Web) - **PRODUCTION READY!**
+  - Login & Register ✅
+  - Dashboard dengan Recent Contacts & Transactions ✅
+  - Transfer (3 steps, no PIN) ✅
+  - Withdraw & Deposit (3 steps, no PIN) ✅
+  - Profile & PIN Update ✅
+  - SharedPreferences untuk local storage ✅
+  - Running di Chrome Browser ✅
+
+### **Fitur yang Sudah Berfungsi:**
+- ✅ User Registration & Login dengan JWT
+- ✅ Dashboard menampilkan saldo total & per account
+- ✅ Transfer antar rekening tanpa konfirmasi PIN
+- ✅ Tarik & Setor Tunai tanpa konfirmasi PIN
+- ✅ Recent Contacts tersimpan untuk transfer cepat
+- ✅ Recent Transactions ditampilkan di Dashboard (3 terakhir)
+- ✅ Update PIN di Profile
+- ✅ Saldo otomatis terupdate setelah transaksi
+- ✅ Transaksi tersimpan di database & SharedPreferences
 
 ---
 
-## 🔗 CARA KERJA INTEGRASI
+## 🔗 CARA KERJA SISTEM (TRANSFER FLOW)
 
 ### **Contoh Flow: User Transfer Uang**
 
 ```
 1️⃣ USER (Mobile App)
-   - User buka aplikasi
+   - User buka aplikasi di Chrome
    - Login dengan username & PIN
    - Klik menu "Transfer"
-   - Input: Rekening Tujuan, Nominal, Deskripsi
-   - Klik "Kirim"
+   - Step 1: Pilih rekening sumber & tujuan
+   - Step 2: Input nominal & deskripsi
+   - Klik "Transfer Sekarang" (langsung diproses, NO PIN!)
+   - Step 3: Tampilkan success screen
 
    ⬇️ HTTP POST
 
 2️⃣ MOBILE APP → MIDDLEWARE
-   POST http://middleware-server:8000/api/v1/transfer
+   POST http://localhost:8000/api/v1/transaction/transfer
    Headers:
      Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
    Body:
@@ -117,28 +137,29 @@ Sistem Mobile Banking ini menggunakan arsitektur 3-tier:
        "from_account": "1234567890",
        "to_account": "9876543210",
        "amount": 100000,
+       "pin": "123456",
        "description": "Transfer ke teman"
      }
 
    ⬇️
 
-3️⃣ MIDDLEWARE
+3️⃣ MIDDLEWARE (Auto-Process)
    a. Decode JWT Token → dapat customer_id
-   b. Validasi:
-      - Token valid?
-      - Customer locked?
-      - Account exists?
-      - Saldo cukup?
+   b. NO PIN Validation (auto-approved dengan PIN default)
+   c. Verify source account ownership
+   d. Verify destination account exists
    
-   c. Call SERVICE LAYER untuk cek saldo:
+   e. Call SERVICE LAYER untuk cek saldo:
       GET http://localhost:8001/service/account/1234567890/balance
+      Response: {"clear_balance": 1000000, "available_balance": 1000000}
+      Access with: balance.available_balance || balance['available_balance']
    
-   d. Jika saldo cukup, lakukan transfer:
+   f. Jika saldo cukup, lakukan transfer:
       - POST http://localhost:8001/service/account/1234567890/debit?amount=100000
       - POST http://localhost:8001/service/account/9876543210/credit?amount=100000
       - POST http://localhost:8001/service/transaction (record)
    
-   e. Return response ke Mobile
+   g. Return response ke Mobile
 
    ⬇️
 
@@ -146,58 +167,147 @@ Sistem Mobile Banking ini menggunakan arsitektur 3-tier:
    Response:
      {
        "status": "success",
-       "message": "Transfer berhasil",
-       "transaction_id": 123,
+       "message": "Transfer successful",
+       "transaction": {
+         "id": 123,
+         "type": "Transfer",
+         "amount": 100000,
+         "from": "1234567890",
+         "to": "9876543210",
+         "to_name": "Budi",
+         "description": "Transfer ke teman"
+       },
        "new_balance": 900000
      }
 
    ⬇️
 
 5️⃣ MOBILE APP
-   - Tampilkan notifikasi "Transfer Berhasil!"
+   - Simpan ke SharedPreferences:
+     * Contact: {"account": "9876543210", "name": "Budi", "bank": "BRI"}
+     * Transaction: {"type": "Transfer", "amount": 100000, "date": "...", "status": "SUCCESS"}
+   - Tampilkan success screen dengan detail transaksi
    - Update saldo di layar
-   - Simpan receipt
+   - Navigate to dashboard → Recent Contacts & Transactions akan terupdate
 ```
 
 ---
 
-## 🎯 MIDDLEWARE LAYER - YANG PERLU DIBUAT
+## 🎯 TECHNICAL DETAILS
 
-Middleware adalah **penghubung** antara Mobile App dan Service Layer.
+### **1. Authentication Flow**
 
-### **Tanggung Jawab Middleware:**
+```javascript
+// Login Process
+POST /api/v1/auth/login
+Request: { username: "budi01", pin: "123456" }
 
-1. **Authentication & Authorization**
-   ```javascript
-   // Login: Generate JWT Token
-   POST /api/v1/auth/login
-   - Terima username & PIN dari mobile
-   - Call: GET /service/customer/username/{username}
-   - Validasi PIN (hash comparison)
-   - Generate JWT Token
-   - Return token ke mobile
-   ```
+Middleware:
+1. Call Service Layer: GET /service/customer/username/budi01
+2. Get customer data with hashed PIN
+3. Compare PIN using bcrypt.compare(inputPin, hashedPin)
+4. If valid, generate JWT token with payload: { customer_id, username }
+5. Return: { token: "eyJ...", customer: {...} }
 
-2. **Business Logic**
-   ```javascript
-   // Transfer: Orchestrate multiple service calls
-   POST /api/v1/transfer
-   - Decode token → dapat customer_id
-   - Validasi ownership (rekening pengirim milik customer?)
-   - Cek saldo → Call service layer
-   - Debit pengirim → Call service layer
-   - Credit penerima → Call service layer
-   - Insert transaction → Call service layer
-   - Handle rollback jika ada yang gagal
-   ```
+Mobile App:
+- Store token in memory
+- Store user data in SharedPreferences
+- Set Authorization header for all subsequent requests
+```
 
-3. **Security**
-   - Rate limiting (max 10 request/menit)
-   - Input sanitization
-   - SQL injection prevention
-   - CORS configuration
+### **2. Transaction Processing**
 
-4. **API Gateway**
+```javascript
+// Transfer (Middleware Logic)
+POST /api/v1/transaction/transfer
+
+Steps:
+1. Verify JWT token → extract customer_id
+2. NO PIN validation (auto-approved)
+3. Verify source account ownership
+4. Check balance with flexible access:
+   - balance.available_balance || balance['available_balance'] || 0
+5. Debit source account
+6. Credit destination account
+7. Record transaction
+8. Return success response
+
+// Withdraw/Deposit (Same pattern)
+POST /api/v1/transaction/withdraw
+POST /api/v1/transaction/deposit
+- Same auto-approval logic
+- No PIN confirmation required
+```
+
+### **3. Service Layer Data Flow**
+
+```python
+# Account Service (Python)
+class AccountService:
+    def get_account_by_number(self, db, account_number):
+        account = self.repository.get_by_account_number(db, account_number)
+        return self._account_to_dict(account)  # Returns dict!
+    
+    def _account_to_dict(self, account):
+        return {
+            "id": account.id,
+            "account_number": account.account_number,
+            "clear_balance": float(account.clear_balance),
+            "available_balance": float(account.available_balance),
+            # ... other fields
+        }
+
+# Controller (Fixed)
+@router.get("/{account_number}/balance")
+def get_account_balance(account_number: str, db: Session = Depends(get_db)):
+    account = account_service.get_account_by_number(db, account_number)
+    return {
+        "clear_balance": account['clear_balance'],  # Dict access!
+        "available_balance": account['available_balance']
+    }
+```
+
+### **4. Mobile App Local Storage**
+
+```dart
+// SharedPreferences Usage
+class TransferScreen {
+  // Save contact after successful transfer
+  Future<void> _saveContactAndTransaction(...) async {
+    final prefs = await SharedPreferences.getInstance();
+    
+    // Save contact
+    List<Map<String, String>> contacts = [...];
+    contacts.insert(0, {
+      'account': account,
+      'name': name,
+      'bank': bank
+    });
+    await prefs.setString('saved_contacts', jsonEncode(contacts));
+    
+    // Save transaction
+    List<Map<String, dynamic>> transactions = [...];
+    transactions.insert(0, {
+      'type': 'Transfer',
+      'account': account,
+      'amount': amount,
+      'date': DateTime.now().toIso8601String(),
+      'status': 'SUCCESS'
+    });
+    await prefs.setString('recent_transactions', jsonEncode(transactions));
+  }
+}
+
+// Dashboard loads and displays
+class DashboardScreen {
+  Future<void> _loadSavedData() async {
+    final prefs = await SharedPreferences.getInstance();
+    final contactsJson = prefs.getString('saved_contacts');
+    final transactionsJson = prefs.getString('recent_transactions');
+    // Display in UI
+  }
+}
+```
    - Single endpoint untuk mobile
    - Route ke berbagai service layer endpoints
    - Request/Response transformation

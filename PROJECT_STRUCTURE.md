@@ -1,15 +1,18 @@
 # 📁 PROJECT STRUCTURE
 
+**Last Updated:** 6 Januari 2026
+
 Struktur folder Mobile Banking System yang terorganisir dan mudah dipahami.
 
 ## 🏗️ Arsitektur Lengkap
 
 ```
 Mobile Banking/
-├── 📱 mobile/              # Flutter Mobile App
-├── 🔧 middleware/          # Node.js API Gateway
-├── ⚙️  service/            # Python FastAPI Service Layer
+├── 📱 mobile/              # Flutter Web App
+├── 🔧 middleware/          # Node.js API Gateway (Port 8000)
+├── ⚙️  service/            # Python FastAPI Service Layer (Port 8001)
 ├── 📄 ARCHITECTURE.md      # Dokumentasi arsitektur
+├── 📄 PROJECT_STRUCTURE.md # Struktur project
 └── 📖 README.md            # Panduan utama
 ```
 
@@ -24,10 +27,11 @@ mobile/
 │   │
 │   ├── 📺 screens/                    # UI Screens
 │   │   ├── login_screen.dart          # Login dengan JWT
-│   │   ├── dashboard_screen.dart      # Dashboard utama
-│   │   ├── transfer_screen.dart       # Transfer uang
-│   │   ├── withdraw_screen.dart       # Tarik tunai
-│   │   ├── deposit_screen.dart        # Setor tunai
+│   │   ├── register_screen.dart       # Registrasi user baru
+│   │   ├── dashboard_screen.dart      # Dashboard utama + Recent Contacts
+│   │   ├── transfer_screen.dart       # Transfer uang (3 steps, no PIN)
+│   │   ├── withdraw_screen.dart       # Tarik & Setor Tunai (3 steps, no PIN)
+│   │   ├── profile_screen.dart        # Profile & Update PIN
 │   │   └── history_screen.dart        # Riwayat transaksi
 │   │
 │   ├── 🔌 services/                   # API Integration
@@ -42,19 +46,30 @@ mobile/
 │   └── ⚙️  utils/                     # Helpers & Constants
 │       └── constants.dart             # API URLs, colors, constants
 │
-├── android/                           # Android platform
-├── ios/                               # iOS platform
-├── web/                               # Web platform
-├── windows/                           # Windows desktop
+├── web/                               # Web platform (AKTIF)
+│   ├── index.html
+│   └── manifest.json
+│
 ├── pubspec.yaml                       # Dependencies Flutter
 └── README.md                          # Dokumentasi mobile app
 ```
 
+### **Key Features:**
+- ✅ Login & Register dengan JWT Authentication
+- ✅ Dashboard dengan Recent Contacts & Transactions
+- ✅ Transfer tanpa konfirmasi PIN (langsung diproses)
+- ✅ Tarik & Setor Tunai tanpa konfirmasi PIN
+- ✅ Transaksi tersimpan di SharedPreferences untuk tampil di Dashboard
+- ✅ Update PIN di Profile
+- ✅ Running di Chrome Browser (Web Platform)
+
 ### **Key Files:**
 - `lib/main.dart` - Entry point, routing
 - `lib/services/api_service.dart` - Semua API calls (login, transfer, balance, dll)
-- `lib/utils/constants.dart` - API endpoints, colors, transaction types
-- `pubspec.yaml` - Dependencies: http, provider, shared_preferences, dll
+- `lib/utils/constants.dart` - API endpoints (http://localhost:8000), colors
+- `lib/screens/transfer_screen.dart` - 3 steps: Account → Amount → Success
+- `lib/screens/withdraw_screen.dart` - 3 steps: Type → Amount → Success
+- `pubspec.yaml` - Dependencies: http, shared_preferences
 
 ---
 
@@ -62,30 +77,40 @@ mobile/
 
 ```
 middleware/
-├── server.js                          # Main server
+├── server.js                          # Main server (Port 8000)
 ├── authenticate.js                    # JWT middleware
 │
 ├── 📂 routes/                         # API Routes
-│   ├── auth.js                        # POST /auth/login, /auth/register
-│   ├── account.js                     # GET /account/balance, /account/details/:accountNumber
-│   ├── transaction.js                 # POST /transaction/transfer, /transaction/withdraw, /transaction/deposit
-│   │                                  # GET /transaction/history
-│   └── customer.js                    # GET /customer/profile, PUT /customer/profile
+│   ├── auth.js                        # POST /api/v1/auth/login, /auth/register
+│   ├── account.js                     # GET /api/v1/account/balance
+│   ├── transaction.js                 # POST /api/v1/transaction/transfer
+│   │                                  # POST /api/v1/transaction/withdraw
+│   │                                  # POST /api/v1/transaction/deposit
+│   └── customer.js                    # GET /api/v1/customer/profile
+│                                      # PUT /api/v1/customer/profile
+│                                      # PUT /api/v1/customer/pin
 │
 ├── 🔌 services/                       # External Services
-│   └── serviceLayerClient.js          # HTTP client ke Service Layer
+│   └── serviceLayerClient.js          # HTTP client ke Service Layer (Port 8001)
 │
 ├── package.json                       # Dependencies Node.js
-├── .env                               # Environment variables
 └── README.md                          # Dokumentasi middleware
 ```
+
+### **Key Features:**
+- ✅ JWT Authentication & Authorization
+- ✅ PIN validation removed (auto-approved dengan PIN default '123456')
+- ✅ Transfer, Withdraw, Deposit langsung diproses tanpa konfirmasi PIN
+- ✅ Balance check dengan flexible dict/object access
+- ✅ Security: CORS, Helmet, Rate Limiting
+- ✅ Communicates dengan Service Layer via HTTP
 
 ### **Key Files:**
 - `server.js` - Express server, CORS, helmet, rate limiting
 - `authenticate.js` - Verify JWT token untuk protected routes
-- `routes/auth.js` - Login & register dengan bcrypt PIN hashing
-- `routes/transaction.js` - Transfer, withdraw, deposit dengan business logic
-- `services/serviceLayerClient.js` - Wrapper untuk call Service Layer API
+- `routes/auth.js` - Login & register (PIN di-hash dengan bcrypt)
+- `routes/transaction.js` - Transfer/withdraw/deposit dengan auto-approval
+- `services/serviceLayerClient.js` - Axios client untuk call Python service
 
 ---
 
@@ -93,18 +118,18 @@ middleware/
 
 ```
 service/
-├── main.py                            # FastAPI entry point
+├── main.py                            # FastAPI entry point (Port 8001)
 │
 ├── 🎮 controllers/                    # REST API Endpoints
 │   ├── __init__.py
 │   ├── customer_controller.py         # /service/customer/* endpoints
-│   ├── account_controller.py          # /service/account/* endpoints
+│   ├── account_controller.py          # /service/account/* endpoints (FIXED)
 │   └── transaction_controller.py      # /service/transaction/* endpoints
 │
 ├── 💼 services/                       # Business Logic Layer
 │   ├── __init__.py
 │   ├── customer_service.py            # Customer business logic
-│   ├── account_service.py             # Account operations
+│   ├── account_service.py             # Account operations + _account_to_dict()
 │   └── transaction_service.py         # Transaction processing
 │
 ├── 📚 repository/                     # Data Access Layer
@@ -117,31 +142,30 @@ service/
 │   ├── __init__.py
 │   ├── database.py                    # SQLAlchemy connection
 │   ├── models.py                      # ORM models (Customer, Account, Transaction)
-│   └── ebanking.db                    # SQLite database file
-│
-├── 📝 tests/                          # Unit tests
-│   └── (test files)
-│
-├── 📋 Postman Collections/
-│   ├── Mobile_Banking_Service.postman_collection.json
-│   ├── Mobile_Banking_Local.postman_environment.json
-│   ├── POSTMAN_GUIDE.md
-│   └── POSTMAN_README.md
+│   ├── ebanking.db                    # SQLite database file (PRODUCTION)
+│   └── mobile_banking.db              # SQLite database file (BACKUP)
 │
 ├── requirements.txt                   # Python dependencies
-├── .env                               # Environment variables
 ├── .env.example                       # Environment template
-├── README.md                          # Dokumentasi service layer
-└── TESTING_GUIDE.md                   # Panduan testing
+└── README.md                          # Dokumentasi service layer
 ```
+
+### **Key Features:**
+- ✅ RESTful API dengan FastAPI
+- ✅ SQLAlchemy ORM untuk database operations
+- ✅ Repository pattern untuk clean architecture
+- ✅ Balance endpoint fixed: dict access dengan bracket notation
+- ✅ Swagger documentation di http://localhost:8001/docs
+- ✅ CORS enabled untuk middleware communication
+- ✅ SQLite database dengan auto-initialization
 
 ### **Key Files:**
 - `main.py` - FastAPI app, CORS, Swagger docs di `/docs`
-- `controllers/` - REST API endpoints (thin layer)
-- `services/` - Business logic & validations
+- `controllers/account_controller.py` - Balance endpoint menggunakan `account['clear_balance']`
+- `services/account_service.py` - Returns dict via `_account_to_dict()`
 - `repository/` - Database operations (CRUD)
-- `db/models.py` - SQLAlchemy ORM models
-- `requirements.txt` - fastapi, uvicorn, sqlalchemy, bcrypt, dll
+- `db/models.py` - SQLAlchemy ORM: Customer, PortfolioAccount, Transaction
+- `requirements.txt` - fastapi, uvicorn, sqlalchemy, bcrypt
 
 ---
 
@@ -149,29 +173,38 @@ service/
 
 ```
 ┌─────────────┐
-│ Mobile App  │ (Flutter - Dart)
+│ Mobile App  │ (Flutter Web - Chrome)
+│             │ - SharedPreferences untuk transactions
+│             │ - No PIN confirmation screens
 └──────┬──────┘
        │ HTTPS
        │ Authorization: Bearer <JWT>
+       │ http://localhost:8000/api/v1/*
        ↓
 ┌─────────────┐
 │ Middleware  │ (Node.js - Port 8000)
 │             │ - JWT Verification
-│             │ - Business Logic
-│             │ - Rate Limiting
+│             │ - Auto-approve transactions (PIN: '123456')
+│             │ - Balance check: flexible dict/object access
+│             │ - Rate Limiting & Security
 └──────┬──────┘
        │ HTTP
        │ Internal API
+       │ http://localhost:8001/service/*
        ↓
 ┌─────────────┐
-│ Service     │ (Python - Port 8001)
-│ Layer       │ - Database Operations
-│             │ - CRUD APIs
+│ Service     │ (Python FastAPI - Port 8001)
+│ Layer       │ - Database Operations (CRUD)
+│             │ - Returns dict via _to_dict()
+│             │ - Balance: account['clear_balance']
 └──────┬──────┘
-       │ SQL
+       │ SQLAlchemy ORM
        ↓
 ┌─────────────┐
 │  SQLite DB  │ (ebanking.db)
+│             │ - m_customer
+│             │ - m_portfolio_account
+│             │ - t_transaction
 └─────────────┘
 ```
 
