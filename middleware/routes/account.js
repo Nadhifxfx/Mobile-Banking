@@ -92,7 +92,6 @@ router.get('/details/:accountNumber', async (req, res) => {
 
 router.post('/create',
   [
-    body('account_number').notEmpty().withMessage('Account number is required'),
     body('account_name').notEmpty().withMessage('Account name is required'),
     body('account_type').notEmpty().withMessage('Account type is required'),
     body('initial_balance').optional().isNumeric().withMessage('Initial balance must be a number')
@@ -109,7 +108,17 @@ router.post('/create',
       }
 
       const customer_id = req.user.customer_id;
-      const { account_number, account_name, account_type, initial_balance = 0 } = req.body;
+      const { account_name, account_type, initial_balance = 0 } = req.body;
+
+      // Generate 10-digit numeric account number
+      const generateAccountNumber = () => {
+        // Start with non-zero digit to avoid leading zeros
+        const firstDigit = Math.floor(Math.random() * 9) + 1;
+        const remainingDigits = Math.floor(Math.random() * 1000000000).toString().padStart(9, '0');
+        return firstDigit.toString() + remainingDigits;
+      };
+
+      const account_number = generateAccountNumber();
 
       // Create account via service layer
       const account = await serviceLayer.createAccount({

@@ -45,8 +45,8 @@ class _TransferScreenState extends State<TransferScreen> {
   final Map<String, List<Map<String, String>>> _bankAccounts = {
     'SAE BANK': [
       {'account': '1234567890', 'name': 'Nadhif', 'bank': 'SAE BANK'},
-      {'account': 'ACC116873', 'name': 'Udin', 'bank': 'SAE BANK'},
-      {'account': 'ACC618098', 'name': 'Baqik', 'bank': 'SAE BANK'},
+      {'account': '5898452955', 'name': 'Udin', 'bank': 'SAE BANK'},
+      {'account': '3533834869', 'name': 'Baqik', 'bank': 'SAE BANK'},
       {'account': '9876543210', 'name': 'Rafli', 'bank': 'SAE BANK'},
     ],
     'BCA - Bank Central Asia': [
@@ -187,17 +187,18 @@ class _TransferScreenState extends State<TransferScreen> {
       }
       
       transactions.insert(0, {
-        'type': 'transfer',
+        'type': 'Transfer',
         'account': account,
         'name': name,
         'bank': bank,
         'amount': amount,
-        'timestamp': DateTime.now().toIso8601String(),
+        'date': DateTime.now().toIso8601String(),
+        'status': 'SUCCESS',
       });
       
-      // Batasi maksimal 50 transaksi
-      if (transactions.length > 50) {
-        transactions = transactions.sublist(0, 50);
+      // Batasi maksimal 20 transaksi
+      if (transactions.length > 20) {
+        transactions = transactions.sublist(0, 20);
       }
       await prefs.setString('recent_transactions', jsonEncode(transactions));
       
@@ -256,17 +257,6 @@ class _TransferScreenState extends State<TransferScreen> {
       return;
     }
 
-    setState(() => _currentStep = 2);
-  }
-
-  Future<void> _verifyPinAndTransfer() async {
-    if (_pinController.text.length != 6) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('PIN harus 6 digit')),
-      );
-      return;
-    }
-
     setState(() => _isSubmitting = true);
 
     try {
@@ -276,7 +266,7 @@ class _TransferScreenState extends State<TransferScreen> {
         fromAccount: _selectedFromAccount!,
         toAccount: _toAccountController.text,
         amount: amount,
-        pin: _pinController.text,
+        pin: '123456', // Default PIN, akan di-handle di backend
         description: 'Transfer ke $_destinationAccountName',
       );
 
@@ -290,7 +280,7 @@ class _TransferScreenState extends State<TransferScreen> {
 
       setState(() {
         _isSubmitting = false;
-        _currentStep = 3;
+        _currentStep = 2; // Langsung ke success screen (step 2 sekarang adalah success)
       });
     } catch (e) {
       setState(() => _isSubmitting = false);
@@ -318,7 +308,7 @@ class _TransferScreenState extends State<TransferScreen> {
       );
     }
 
-    if (_currentStep == 3) {
+    if (_currentStep == 2) {
       return _buildSuccessScreen();
     }
 
@@ -340,9 +330,7 @@ class _TransferScreenState extends State<TransferScreen> {
       ),
       body: _currentStep == 0
           ? _buildStep1()
-          : _currentStep == 1
-              ? _buildStep2()
-              : _buildStep3(),
+          : _buildStep2(),
       bottomNavigationBar: _currentStep == 0
           ? SafeArea(
               child: Padding(
@@ -358,22 +346,22 @@ class _TransferScreenState extends State<TransferScreen> {
                 ),
               ),
             )
-          : _currentStep == 1
-              ? SafeArea(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: ElevatedButton(
-                      onPressed: _handleTransfer,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primaryBlue,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                      child: const Text('Transfer', style: TextStyle(fontSize: 16, color: Colors.white, fontWeight: FontWeight.bold)),
-                    ),
+          : SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: ElevatedButton(
+                  onPressed: _isSubmitting ? null : _handleTransfer,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryBlue,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
-                )
-              : null,
+                  child: _isSubmitting 
+                      ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                      : const Text('Transfer Sekarang', style: TextStyle(fontSize: 16, color: Colors.white, fontWeight: FontWeight.bold)),
+                ),
+              ),
+            ),
     );
   }
 
@@ -593,53 +581,6 @@ class _TransferScreenState extends State<TransferScreen> {
               );
             }).toList(),
             onChanged: (value) => setState(() => _selectedFromAccount = value),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStep3() {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.lock_outline, size: 80, color: AppColors.primaryBlue),
-          const SizedBox(height: 24),
-          const Text('Masukkan PIN', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
-          const Text('Masukkan PIN 6 digit untuk konfirmasi transfer', textAlign: TextAlign.center, style: TextStyle(color: AppColors.grey)),
-          const SizedBox(height: 32),
-          TextField(
-            controller: _pinController,
-            decoration: InputDecoration(
-              hintText: '● ● ● ● ● ●',
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              filled: true,
-              fillColor: AppColors.backgroundGrey,
-            ),
-            keyboardType: TextInputType.number,
-            obscureText: true,
-            maxLength: 6,
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 24, letterSpacing: 8),
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-          ),
-          const SizedBox(height: 32),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: _isSubmitting ? null : _verifyPinAndTransfer,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primaryBlue,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              child: _isSubmitting
-                  ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                  : const Text('Konfirmasi', style: TextStyle(fontSize: 16, color: Colors.white, fontWeight: FontWeight.bold)),
-            ),
           ),
         ],
       ),

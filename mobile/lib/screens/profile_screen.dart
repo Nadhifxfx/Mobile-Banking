@@ -81,6 +81,116 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  Future<void> _handleChangePIN() async {
+    final oldPinController = TextEditingController();
+    final newPinController = TextEditingController();
+    final confirmPinController = TextEditingController();
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Ubah PIN'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: oldPinController,
+              decoration: const InputDecoration(
+                labelText: 'PIN Lama (Kosongkan jika belum ada)',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.lock_outline),
+              ),
+              keyboardType: TextInputType.number,
+              obscureText: true,
+              maxLength: 6,
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: newPinController,
+              decoration: const InputDecoration(
+                labelText: 'PIN Baru',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.lock),
+              ),
+              keyboardType: TextInputType.number,
+              obscureText: true,
+              maxLength: 6,
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: confirmPinController,
+              decoration: const InputDecoration(
+                labelText: 'Konfirmasi PIN Baru',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.lock),
+              ),
+              keyboardType: TextInputType.number,
+              obscureText: true,
+              maxLength: 6,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Batal'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (newPinController.text.length != 6) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('PIN baru harus 6 digit')),
+                );
+                return;
+              }
+
+              if (newPinController.text != confirmPinController.text) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('PIN baru tidak cocok')),
+                );
+                return;
+              }
+
+              try {
+                await _apiService.updatePIN(
+                  oldPin: oldPinController.text.isEmpty ? null : oldPinController.text,
+                  newPin: newPinController.text,
+                );
+
+                if (!mounted) return;
+                
+                Navigator.pop(context, true);
+                
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('PIN berhasil diubah'),
+                    backgroundColor: AppColors.success,
+                  ),
+                );
+              } catch (e) {
+                if (!mounted) return;
+                
+                Navigator.pop(context, false);
+                
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(e.toString().replaceAll('Exception: ', '')),
+                    backgroundColor: AppColors.error,
+                  ),
+                );
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primaryBlue,
+            ),
+            child: const Text('Ubah PIN'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -216,14 +326,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   icon: Icons.lock_outline,
                                   label: 'Ubah PIN',
                                   color: AppColors.briOrange,
-                                  onTap: () {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text('Fitur akan segera hadir'),
-                                        behavior: SnackBarBehavior.floating,
-                                      ),
-                                    );
-                                  },
+                                  onTap: _handleChangePIN,
                                 ),
                                 const Divider(height: 1),
                                 _buildActionItem(

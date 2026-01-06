@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 import '../services/api_service.dart';
 import '../utils/constants.dart';
 
@@ -15,7 +17,7 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
   final _pinController = TextEditingController();
   final _apiService = ApiService();
 
-  int _currentStep = 0; // 0: pilih type, 1: input amount, 2: input PIN, 3: success
+  int _currentStep = 0; // 0: pilih type, 1: input amount, 2: success
   String _transactionType = ''; // 'deposit' or 'withdraw'
   String _selectedLocation = 'ATM'; // For withdraw only
   String? _selectedAccount;
@@ -63,21 +65,47 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
     });
   }
 
+  Future<void> _saveTransaction({
+    required String type,
+    required double amount,
+    required String accountNumber,
+  }) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      
+      // Load existing transactions
+      final transactionsJson = prefs.getString('recent_transactions');
+      List<Map<String, dynamic>> transactions = [];
+      
+      if (transactionsJson != null) {
+        final List<dynamic> decoded = jsonDecode(transactionsJson);
+        transactions = decoded.map((e) => Map<String, dynamic>.from(e)).toList();
+      }
+      
+      // Add new transaction at the beginning
+      transactions.insert(0, {
+        'type': type == 'deposit' ? 'Setor Tunai' : 'Tarik Tunai',
+        'account': accountNumber,
+        'amount': amount,
+        'date': DateTime.now().toIso8601String(),
+        'status': 'SUCCESS',
+      });
+      
+      // Keep only last 20 transactions
+      if (transactions.length > 20) {
+        transactions = transactions.sublist(0, 20);
+      }
+      
+      await prefs.setString('recent_transactions', jsonEncode(transactions));
+    } catch (e) {
+      print('Error saving transaction: \$e');
+    }
+  }
+
   Future<void> _handleNext() async {
     if (_amountController.text.isEmpty || _selectedAccount == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Lengkapi semua field')),
-      );
-      return;
-    }
-
-    setState(() => _currentStep = 2);
-  }
-
-  Future<void> _verifyPinAndProcess() async {
-    if (_pinController.text.length != 6) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('PIN harus 6 digit')),
       );
       return;
     }
@@ -91,19 +119,26 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
         await _apiService.deposit(
           accountNumber: _selectedAccount!,
           amount: amount,
-          pin: _pinController.text,
+          pin: '123456', // Default PIN
         );
       } else {
         await _apiService.withdraw(
           accountNumber: _selectedAccount!,
           amount: amount,
-          pin: _pinController.text,
+          pin: '123456', // Default PIN
         );
       }
 
+      // Save transaction to SharedPreferences
+      await _saveTransaction(
+        type: _transactionType,
+        amount: amount,
+        accountNumber: _selectedAccount!,
+      );
+
       setState(() {
         _isSubmitting = false;
-        _currentStep = 3;
+        _currentStep = 2; // Langsung ke success
       });
     } catch (e) {
       setState(() => _isSubmitting = false);
@@ -143,9 +178,7 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
           ? _buildStep0()
           : _currentStep == 1
               ? _buildStep1()
-              : _currentStep == 2
-                  ? _buildStep2()
-                  : _buildSuccessScreen(),
+              : _buildSuccessScreen(),
       bottomNavigationBar: _currentStep == 1
           ? Container(
               padding: const EdgeInsets.all(16),
@@ -160,43 +193,19 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
                 ],
               ),
               child: ElevatedButton(
-                onPressed: _handleNext,
+                onPressed: _isSubmitting ? null : _handleNext,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primaryBlue,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
-                child: const Text('Lanjutkan', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                child: _isSubmitting 
+                    ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                    : Text('${_transactionType == "deposit" ? "Setor" : "Tarik"} Sekarang', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               ),
             )
-          : _currentStep == 2
-              ? Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 10,
-                        offset: const Offset(0, -5),
-                      ),
-                    ],
-                  ),
-                  child: ElevatedButton(
-                    onPressed: _isSubmitting ? null : _verifyPinAndProcess,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primaryBlue,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    ),
-                    child: _isSubmitting
-                        ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                        : const Text('Konfirmasi', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                  ),
-                )
-              : null,
+          : null,
     );
   }
 
@@ -438,40 +447,6 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
           border: Border.all(color: AppColors.primaryBlue.withOpacity(0.3)),
         ),
         child: Text('Rp $amount', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
-      ),
-    );
-  }
-
-  Widget _buildStep2() {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.lock_outline, size: 80, color: AppColors.primaryBlue),
-          const SizedBox(height: 24),
-          const Text('Masukkan PIN', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
-          Text('Masukkan PIN 6 digit untuk konfirmasi ${_transactionType == "deposit" ? "setor" : "tarik"} tunai', style: const TextStyle(color: AppColors.grey), textAlign: TextAlign.center),
-          const SizedBox(height: 32),
-          TextField(
-            controller: _pinController,
-            decoration: InputDecoration(
-              hintText: '     ',
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-              filled: true,
-              fillColor: Colors.white,
-              counterText: '\${_pinController.text.length}/6',
-            ),
-            keyboardType: TextInputType.number,
-            obscureText: true,
-            maxLength: 6,
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 24, letterSpacing: 8),
-            onChanged: (value) => setState(() {}),
-          ),
-        ],
       ),
     );
   }

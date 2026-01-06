@@ -318,8 +318,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   // Tampilkan dummy jika tidak ada kontak tersimpan
                                   if (_savedContacts.isEmpty) ...[
                                     _buildPersonItem(Icons.person, 'Nadhif', () {}, accountNumber: '1234567890'),
-                                    _buildPersonItem(Icons.person, 'Udin', () {}, accountNumber: 'ACC116873'),
-                                    _buildPersonItem(Icons.person, 'Baqik', () {}, accountNumber: 'ACC618098'),
+                                    _buildPersonItem(Icons.person, 'Udin', () {}, accountNumber: '5898452955'),
+                                    _buildPersonItem(Icons.person, 'Baqik', () {}, accountNumber: '3533834869'),
                                     _buildPersonItem(Icons.person, 'Rafli', () {}, accountNumber: '9876543210'),
                                   ],
                                 ],
@@ -349,28 +349,58 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               child: Column(
                                 children: _recentTransactions.take(3).map((transaction) {
                                   final amount = transaction['amount'] as num;
-                                  final timestamp = DateTime.parse(transaction['timestamp']);
+                                  final dateStr = transaction['date'] ?? transaction['timestamp'];
+                                  final timestamp = DateTime.parse(dateStr);
                                   final now = DateTime.now();
                                   final difference = now.difference(timestamp);
                                   
-                                  String dateStr;
+                                  String formattedDate;
                                   if (difference.inDays == 0) {
-                                    dateStr = 'Hari ini, ${timestamp.hour.toString().padLeft(2, '0')}:${timestamp.minute.toString().padLeft(2, '0')}';
+                                    formattedDate = 'Hari ini, ${timestamp.hour.toString().padLeft(2, '0')}:${timestamp.minute.toString().padLeft(2, '0')}';
                                   } else if (difference.inDays == 1) {
-                                    dateStr = 'Kemarin, ${timestamp.hour.toString().padLeft(2, '0')}:${timestamp.minute.toString().padLeft(2, '0')}';
+                                    formattedDate = 'Kemarin, ${timestamp.hour.toString().padLeft(2, '0')}:${timestamp.minute.toString().padLeft(2, '0')}';
                                   } else {
-                                    dateStr = '${timestamp.day} ${_getMonthName(timestamp.month)}, ${timestamp.hour.toString().padLeft(2, '0')}:${timestamp.minute.toString().padLeft(2, '0')}';
+                                    formattedDate = '${timestamp.day} ${_getMonthName(timestamp.month)}, ${timestamp.hour.toString().padLeft(2, '0')}:${timestamp.minute.toString().padLeft(2, '0')}';
+                                  }
+                                  
+                                  // Determine transaction details based on type
+                                  String transactionType = transaction['type'] ?? 'Transfer';
+                                  IconData icon;
+                                  Color iconColor;
+                                  String title;
+                                  Color amountColor;
+                                  String amountPrefix;
+                                  
+                                  if (transactionType == 'Setor Tunai') {
+                                    icon = Icons.arrow_downward;
+                                    iconColor = Colors.green;
+                                    title = 'Setor Tunai';
+                                    amountColor = Colors.green;
+                                    amountPrefix = '+ ';
+                                  } else if (transactionType == 'Tarik Tunai') {
+                                    icon = Icons.arrow_upward;
+                                    iconColor = Colors.red;
+                                    title = 'Tarik Tunai';
+                                    amountColor = Colors.red;
+                                    amountPrefix = '- ';
+                                  } else {
+                                    // Transfer
+                                    icon = Icons.arrow_upward;
+                                    iconColor = AppColors.briOrange;
+                                    title = 'Transfer ke ${transaction['name'] ?? 'Unknown'}';
+                                    amountColor = Colors.red;
+                                    amountPrefix = '- ';
                                   }
                                   
                                   return Padding(
                                     padding: const EdgeInsets.only(bottom: 8),
                                     child: _buildTransactionItem(
-                                      icon: Icons.arrow_upward,
-                                      iconColor: AppColors.briOrange,
-                                      title: 'Transfer ke ${transaction['name']}',
-                                      date: dateStr,
-                                      amount: '- Rp ${_formatCurrency(amount.toDouble())}',
-                                      amountColor: Colors.red,
+                                      icon: icon,
+                                      iconColor: iconColor,
+                                      title: title,
+                                      date: formattedDate,
+                                      amount: '$amountPrefix Rp ${_formatCurrency(amount.toDouble())}',
+                                      amountColor: amountColor,
                                       accountNumber: transaction['account'],
                                     ),
                                   );
@@ -390,7 +420,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                       date: 'Hari ini, 10:30',
                                       amount: '- Rp 50.000',
                                       amountColor: Colors.red,
-                                      accountNumber: 'ACC116873',
+                                      accountNumber: '5898452955',
                                     ),
                                     const SizedBox(height: 8),
                                     _buildTransactionItem(
@@ -400,7 +430,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                       date: 'Kemarin, 14:20',
                                       amount: '+ Rp 100.000',
                                       amountColor: Colors.green,
-                                      accountNumber: 'ACC618098',
+                                      accountNumber: '3533834869',
                                     ),
                                     const SizedBox(height: 8),
                                     _buildTransactionItem(

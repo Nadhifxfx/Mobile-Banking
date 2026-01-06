@@ -6,6 +6,7 @@
 const express = require('express');
 const router = express.Router();
 const { body, validationResult } = require('express-validator');
+const bcrypt = require('bcrypt');
 const serviceLayer = require('../services/serviceLayerClient');
 const authenticate = require('../authenticate');
 
@@ -90,6 +91,71 @@ router.put('/profile',
       res.status(error.status || 500).json({
         error: 'Failed to Update Profile',
         message: error.message || 'Unable to update profile'
+      });
+    }
+  }
+);
+
+// ===== Update/Set PIN =====
+
+router.put('/pin',
+  [
+    body('old_pin').optional().isLength({ min: 6, max: 6 }).withMessage('Old PIN must be 6 digits'),
+    body('new_pin').notEmpty().withMessage('New PIN is required').isLength({ min: 6, max: 6 }).withMessage('New PIN must be 6 digits').isNumeric().withMessage('PIN must be numeric')
+  ],
+  async (req, res) => {
+    try {
+      // Validate input
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ 
+          error: 'Validation Error',
+          details: errors.array() 
+        });
+      }
+
+      const customer_id = req.user.customer_id;
+      const { old_pin, new_pin } = req.body;
+
+      // Get customer
+      const customer = await serviceLayer.getCustomerById(customer_id);
+
+      // If customer already has a PIN, verify old PIN
+      if (customer.customer_pin) {
+        if (!old_pin) {
+          return res.status(400).json({
+            error: 'Bad Request',
+            message: 'Old PIN is required to change PIN'
+          });
+        }
+
+        const isValidOldPin = await bcrypt.compare(old_pin, customer.customer_pin);
+        if (!isValidOldPin) {
+          return res.status(401).json({
+            error: 'Unauthorized',
+            message: 'PIN lama salah'
+          });
+        }
+      }
+
+      // Hash new PIN
+      const hashedPin = await bcrypt.hash(new_pin, 10);
+
+      // Update PIN via service layer
+      const updatedCustomer = await serviceLayer.updateCustomer(customer_id, {
+        customer_pin: hashedPin
+      });
+
+      res.json({
+        status: 'success',
+        message: customer.customer_pin ? 'PIN berhasil diubah' : 'PIN berhasil diatur'
+      });
+
+    } catch (error) {
+      console.error('Update PIN error:', error);
+      res.status(error.status || 500).json({
+        error: 'Failed to Update PIN',
+        message: error.message || 'Unable to update PIN'
       });
     }
   }

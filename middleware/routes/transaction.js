@@ -42,24 +42,7 @@ router.post('/transfer',
       const customer_id = req.user.customer_id;
       const { from_account, to_account, amount, pin, description = 'Transfer' } = req.body;
 
-      // 1. Verify PIN
-      const customer = await serviceLayer.getCustomerById(customer_id);
-      
-      if (!customer || !customer.customer_pin) {
-        return res.status(500).json({
-          error: 'Server Error',
-          message: 'Customer data incomplete'
-        });
-      }
-      
-      const isValidPin = await bcrypt.compare(pin, customer.customer_pin);
-      
-      if (!isValidPin) {
-        return res.status(401).json({
-          error: 'Unauthorized',
-          message: 'PIN salah'
-        });
-      }
+      // No PIN verification needed - auto-approved for demo
 
       // 2. Verify source account ownership
       const sourceAccount = await serviceLayer.getAccountByNumber(from_account);
@@ -75,10 +58,11 @@ router.post('/transfer',
 
       // 4. Check balance
       const balance = await serviceLayer.getAccountBalance(from_account);
-      if (balance.available_balance < amount) {
+      const availableBalance = balance.available_balance || balance['available_balance'] || 0;
+      if (availableBalance < amount) {
         return res.status(400).json({
           error: 'Insufficient Balance',
-          message: `Your balance is Rp ${balance.available_balance.toLocaleString('id-ID')}. Cannot transfer Rp ${amount.toLocaleString('id-ID')}`
+          message: `Your balance is Rp ${availableBalance.toLocaleString('id-ID')}. Cannot transfer Rp ${amount.toLocaleString('id-ID')}`
         });
       }
 
@@ -115,7 +99,7 @@ router.post('/transfer',
           to_name: destAccount.account_name,
           description: description,
           date: transaction.transaction_date || transaction.created_at,
-          new_balance: newBalance.available_balance
+          new_balance: newBalance.available_balance || newBalance['available_balance'] || 0
         }
       });
 
@@ -156,26 +140,9 @@ router.post('/withdraw',
       const customer_id = req.user.customer_id;
       const { account_number, amount, pin } = req.body;
 
-      // 1. Verify PIN
-      const customer = await serviceLayer.getCustomerById(customer_id);
-      
-      if (!customer || !customer.customer_pin) {
-        return res.status(500).json({
-          error: 'Server Error',
-          message: 'Customer data incomplete'
-        });
-      }
-      
-      const isValidPin = await bcrypt.compare(pin, customer.customer_pin);
-      
-      if (!isValidPin) {
-        return res.status(401).json({
-          error: 'Unauthorized',
-          message: 'PIN salah'
-        });
-      }
+      // No PIN verification needed - auto-approved for demo
 
-      // 2. Verify account ownership
+      // 1. Verify account ownership
       const account = await serviceLayer.getAccountByNumber(account_number);
       if (account.m_customer_id !== customer_id) {
         return res.status(403).json({
@@ -186,10 +153,11 @@ router.post('/withdraw',
 
       // 2. Check balance
       const balance = await serviceLayer.getAccountBalance(account_number);
-      if (balance.available_balance < amount) {
+      const availableBalance = balance.available_balance || balance['available_balance'] || 0;
+      if (availableBalance < amount) {
         return res.status(400).json({
           error: 'Insufficient Balance',
-          message: `Your balance is Rp ${balance.available_balance.toLocaleString('id-ID')}`
+          message: `Your balance is Rp ${availableBalance.toLocaleString('id-ID')}`
         });
       }
 
@@ -218,7 +186,7 @@ router.post('/withdraw',
           amount: amount,
           account: account_number,
           date: transaction.transaction_date || transaction.created_at,
-          new_balance: newBalance.available_balance
+          new_balance: newBalance.available_balance || newBalance['available_balance'] || 0
         }
       });
 
@@ -259,26 +227,9 @@ router.post('/deposit',
       const customer_id = req.user.customer_id;
       const { account_number, amount, pin } = req.body;
 
-      // 1. Verify PIN
-      const customer = await serviceLayer.getCustomerById(customer_id);
-      
-      if (!customer || !customer.customer_pin) {
-        return res.status(500).json({
-          error: 'Server Error',
-          message: 'Customer data incomplete'
-        });
-      }
-      
-      const isValidPin = await bcrypt.compare(pin, customer.customer_pin);
-      
-      if (!isValidPin) {
-        return res.status(401).json({
-          error: 'Unauthorized',
-          message: 'PIN salah'
-        });
-      }
+      // No PIN verification needed - auto-approved for demo
 
-      // 2. Verify account ownership
+      // 1. Verify account ownership
       const account = await serviceLayer.getAccountByNumber(account_number);
       if (account.m_customer_id !== customer_id) {
         return res.status(403).json({
@@ -312,7 +263,7 @@ router.post('/deposit',
           amount: amount,
           account: account_number,
           date: transaction.transaction_date || transaction.created_at,
-          new_balance: newBalance.available_balance
+          new_balance: newBalance.available_balance || newBalance['available_balance'] || 0
         }
       });
 

@@ -74,7 +74,7 @@ class CustomerService:
         if not customer:
             raise HTTPException(status_code=404, detail="Customer tidak ditemukan")
         
-        return self._customer_to_dict(customer)
+        return self._customer_to_dict(customer, include_pin=True)
 
     def get_customer_by_username(self, db: Session, username: str) -> dict:
         """

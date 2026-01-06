@@ -284,6 +284,37 @@ class ApiService {
     }
   }
 
+  // Update PIN
+  Future<Map<String, dynamic>> updatePIN({
+    String? oldPin,
+    required String newPin,
+  }) async {
+    try {
+      final body = <String, dynamic>{
+        'new_pin': newPin,
+      };
+      
+      if (oldPin != null && oldPin.isNotEmpty) {
+        body['old_pin'] = oldPin;
+      }
+
+      final response = await http.put(
+        Uri.parse('${ApiConstants.middlewareBaseUrl}/customer/pin'),
+        headers: await getHeaders(),
+        body: jsonEncode(body),
+      );
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        final error = jsonDecode(response.body);
+        throw Exception(error['message'] ?? 'Failed to update PIN');
+      }
+    } catch (e) {
+      throw Exception('Connection error: $e');
+    }
+  }
+
   // Logout
   Future<void> logout() async {
     await removeToken();

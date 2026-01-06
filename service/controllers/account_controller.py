@@ -124,6 +124,26 @@ def get_account_by_id(account_id: int, db: Session = Depends(get_db)):
     return result
 
 
+@router.get("/{account_number}/balance")
+def get_account_balance(account_number: str, db: Session = Depends(get_db)):
+    """
+    Get balance account by account number
+    
+    Endpoint: GET /service/account/{account_number}/balance
+    
+    Returns:
+    {
+        "clear_balance": 1000000,
+        "available_balance": 1000000
+    }
+    """
+    account = account_service.get_account_by_number(db, account_number)
+    return {
+        "clear_balance": account['clear_balance'],
+        "available_balance": account['available_balance']
+    }
+
+
 @router.put("/{account_number}/balance", response_model=AccountResponse)
 def update_account_balance(account_number: str, balance: AccountBalanceUpdate, db: Session = Depends(get_db)):
     """
