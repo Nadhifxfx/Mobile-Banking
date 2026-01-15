@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import '../services/realtime_service.dart';
+import 'dart:async';
 
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});
@@ -13,11 +15,27 @@ class _HistoryScreenState extends State<HistoryScreen> {
   List<dynamic> _transactions = [];
   bool _isLoading = true;
   String? _error;
+  StreamSubscription<Map<String, dynamic>>? _txnSub;
 
   @override
   void initState() {
     super.initState();
     _loadTransactions();
+
+    // Realtime updates
+    RealtimeService.instance.connect();
+    _txnSub = RealtimeService.instance.transactionStream.listen((event) {
+      if (!mounted) return;
+      setState(() {
+        _transactions.insert(0, event);
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _txnSub?.cancel();
+    super.dispose();
   }
 
   Future<void> _loadTransactions() async {
@@ -44,8 +62,18 @@ class _HistoryScreenState extends State<HistoryScreen> {
     return 'Rp ${amount.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')}';
   }
 
-  String _getTransactionType(String type) {
-    switch (type.toUpperCase()) {
+  String _normalizeTypeCode(Map<String, dynamic> txn) {
+    final raw = (txn['transaction_type'] ?? txn['type'] ?? '').toString();
+    final upper = raw.toUpperCase();
+    if (upper == 'TR' || upper == 'WD' || upper == 'DP') return upper;
+    if (upper == 'TRANSFER') return 'TR';
+    if (upper == 'WITHDRAWAL' || upper == 'TARIK TUNAI') return 'WD';
+    if (upper == 'DEPOSIT' || upper == 'SETOR TUNAI') return 'DP';
+    return '';
+  }
+
+  String _getTransactionType(String typeCode) {
+    switch (typeCode.toUpperCase()) {
       case 'TR':
         return 'Transfer';
       case 'WD':
@@ -128,10 +156,21 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       child: ListView.builder(
                         itemCount: _transactions.length,
                         itemBuilder: (context, index) {
-                          final txn = _transactions[index];
-                          final type = txn['transaction_type'] ?? '';
-                          final amount = txn['transaction_amount']?.toDouble() ?? 0;
-                          final isDebit = type == 'TR' || type == 'WD';
+                          final txn = Map<String, dynamic>.from(_transactions[index] as Map);
+                          final typeCode = _normalizeTypeCode(txn);
+                            final rawAmount = txn['transaction_amount'] ?? txn['amount'] ?? 0;
+                            final amount = rawAmount is num
+                              ? rawAmount.toDouble()
+                              : (double.tryParse(rawAmount.toString()) ?? 0);
+                          final isDebit = typeCode == 'TR' || typeCode == 'WD';
+
+                          final dateText = (txn['transaction_date'] ??
+                              txn['date'] ??
+                              txn['created_at'] ??
+                              '')
+                            .toString();
+                          final fromAccount = txn['from_account_number'] ?? txn['from_account'];
+                          final toAccount = txn['to_account_number'] ?? txn['to_account'];
 
                           return Card(
                             margin: const EdgeInsets.symmetric(
@@ -140,31 +179,29 @@ class _HistoryScreenState extends State<HistoryScreen> {
                             ),
                             child: ListTile(
                               leading: CircleAvatar(
-                                backgroundColor: _getTransactionColor(type).withOpacity(0.2),
+                                backgroundColor: _getTransactionColor(typeCode).withOpacity(0.2),
                                 child: Icon(
-                                  _getTransactionIcon(type),
-                                  color: _getTransactionColor(type),
+                                  _getTransactionIcon(typeCode),
+                                  color: _getTransactionColor(typeCode),
                                 ),
                               ),
                               title: Text(
-                                txn['description'] ?? _getTransactionType(type),
+                                txn['description']?.toString() ?? _getTransactionType(typeCode),
                                 style: const TextStyle(fontWeight: FontWeight.bold),
                               ),
                               subtitle: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   const SizedBox(height: 4),
-                                  Text(txn['transaction_date'] ?? txn['created_at'] ?? ''),
-                                  if (txn['from_account_number'] != null)
-                                    Text('From: ${txn['from_account_number']}'),
-                                  if (txn['to_account_number'] != null)
-                                    Text('To: ${txn['to_account_number']}'),
+                                  Text(dateText),
+                                  if (fromAccount != null) Text('From: $fromAccount'),
+                                  if (toAccount != null) Text('To: $toAccount'),
                                 ],
                               ),
                               trailing: Text(
                                 '${isDebit ? '-' : '+'} ${_formatCurrency(amount)}',
                                 style: TextStyle(
-                                  color: _getTransactionColor(type),
+                                  color: _getTransactionColor(typeCode),
                                   fontWeight: FontWeight.bold,
                                   fontSize: 16,
                                 ),

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+import 'dart:async';
 import '../services/api_service.dart';
+import '../services/realtime_service.dart';
 import '../utils/constants.dart';
 import 'transfer_screen.dart';
 import 'withdraw_screen.dart';
@@ -16,6 +18,7 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   final _apiService = ApiService();
+  StreamSubscription<Map<String, dynamic>>? _txnSub;
   bool _isLoading = true;
   double _totalBalance = 0;
   List<dynamic> _accounts = [];
@@ -33,6 +36,52 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _loadUserName();
     _loadData();
     _loadSavedData();
+
+    // Realtime updates for "Transaksi Terbaru"
+    RealtimeService.instance.connect();
+    _txnSub = RealtimeService.instance.transactionStream.listen(_handleRealtimeTransaction);
+  }
+
+  @override
+  void dispose() {
+    _txnSub?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _handleRealtimeTransaction(Map<String, dynamic> txn) async {
+    if (!mounted) return;
+
+    final rawAmount = txn['amount'] ?? txn['transaction_amount'] ?? 0;
+    final amount = rawAmount is num
+        ? rawAmount.toDouble()
+        : (double.tryParse(rawAmount.toString()) ?? 0);
+
+    final type = (txn['type'] ?? '').toString();
+    final account = (txn['account'] ?? txn['to_account_number'] ?? txn['from_account_number'])?.toString();
+
+    final normalized = <String, dynamic>{
+      'type': type.isEmpty ? 'Transfer' : type,
+      'account': account ?? '',
+      'name': txn['name']?.toString(),
+      'bank': (txn['bank'] ?? 'SAE BANK').toString(),
+      'amount': amount,
+      'date': (txn['date'] ?? txn['transaction_date'] ?? DateTime.now().toIso8601String()).toString(),
+      'status': (txn['status'] ?? 'SUCCESS').toString(),
+    };
+
+    setState(() {
+      _recentTransactions.insert(0, normalized);
+      if (_recentTransactions.length > 20) {
+        _recentTransactions = _recentTransactions.sublist(0, 20);
+      }
+    });
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('recent_transactions', jsonEncode(_recentTransactions));
+    } catch (_) {
+      // ignore
+    }
   }
 
   Future<void> _loadUserName() async {

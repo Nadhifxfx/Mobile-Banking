@@ -73,7 +73,6 @@ router.post('/transfer',
       await serviceLayer.creditAccount(to_account, amount);
 
       // 7. Record transaction
-      // 7. Record transaction
       const transaction = await serviceLayer.createTransaction({
         m_customer_id: customer_id,
         transaction_type: 'TR',
@@ -83,6 +82,30 @@ router.post('/transfer',
         status: 'SUCCESS',
         description: description
       });
+
+      // Realtime: notify client(s) in this customer room
+      const io = req.app.get('io');
+      if (io) {
+        io.to(`customer:${customer_id}`).emit('transaction:new', {
+          // Activity format (used by dashboard)
+          type: 'Transfer',
+          account: to_account,
+          name: destAccount?.account_name,
+          bank: 'SAE BANK',
+          amount: amount,
+          date: transaction.transaction_date || transaction.created_at || new Date().toISOString(),
+          status: 'SUCCESS',
+
+          // Raw-ish fields (used by history)
+          id: transaction.id,
+          transaction_type: 'TR',
+          transaction_amount: amount,
+          from_account_number: from_account,
+          to_account_number: to_account,
+          description: description,
+          transaction_date: transaction.transaction_date || transaction.created_at || new Date().toISOString()
+        });
+      }
 
       // 8. Get new balance
       const newBalance = await serviceLayer.getAccountBalance(from_account);
@@ -174,6 +197,26 @@ router.post('/withdraw',
         description: 'Tarik Tunai'
       });
 
+      // Realtime: notify client(s) in this customer room
+      const io = req.app.get('io');
+      if (io) {
+        io.to(`customer:${customer_id}`).emit('transaction:new', {
+          type: 'Tarik Tunai',
+          account: account_number,
+          amount: amount,
+          date: transaction.transaction_date || transaction.created_at || new Date().toISOString(),
+          status: 'SUCCESS',
+
+          id: transaction.id,
+          transaction_type: 'WD',
+          transaction_amount: amount,
+          from_account_number: account_number,
+          to_account_number: null,
+          description: 'Tarik Tunai',
+          transaction_date: transaction.transaction_date || transaction.created_at || new Date().toISOString()
+        });
+      }
+
       // 5. Get new balance
       const newBalance = await serviceLayer.getAccountBalance(account_number);
 
@@ -250,6 +293,26 @@ router.post('/deposit',
         status: 'SUCCESS',
         description: 'Setor Tunai'
       });
+
+      // Realtime: notify client(s) in this customer room
+      const io = req.app.get('io');
+      if (io) {
+        io.to(`customer:${customer_id}`).emit('transaction:new', {
+          type: 'Setor Tunai',
+          account: account_number,
+          amount: amount,
+          date: transaction.transaction_date || transaction.created_at || new Date().toISOString(),
+          status: 'SUCCESS',
+
+          id: transaction.id,
+          transaction_type: 'DP',
+          transaction_amount: amount,
+          from_account_number: null,
+          to_account_number: account_number,
+          description: 'Setor Tunai',
+          transaction_date: transaction.transaction_date || transaction.created_at || new Date().toISOString()
+        });
+      }
 
       // 4. Get new balance
       const newBalance = await serviceLayer.getAccountBalance(account_number);

@@ -3,8 +3,14 @@ import 'package:flutter/material.dart';
 /// API Configuration and Constants
 class ApiConstants {
   // Base URLs
-  static const String middlewareBaseUrl = 'http://localhost:8000/api/v1';
-  static const String serviceLayerBaseUrl = 'http://localhost:8001/service';
+  static const String defaultMiddlewareBaseUrl = 'http://localhost:8000/api/v1';
+  static const String defaultServiceLayerBaseUrl = 'http://localhost:8001/service';
+
+  @Deprecated('Use AppSettings.getMiddlewareBaseUrl() for runtime-configurable server host')
+  static const String middlewareBaseUrl = defaultMiddlewareBaseUrl;
+
+  @Deprecated('Use AppSettings.getServiceLayerBaseUrl() for runtime-configurable server host')
+  static const String serviceLayerBaseUrl = defaultServiceLayerBaseUrl;
   
   // API Endpoints
   static const String loginEndpoint = '/auth/login';

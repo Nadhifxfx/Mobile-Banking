@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../services/api_service.dart';
+import '../services/app_settings.dart';
 import '../utils/constants.dart';
 import 'dashboard_screen.dart';
 import 'register_screen.dart';
@@ -16,15 +17,283 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _usernameController = TextEditingController();
   final _pinController = TextEditingController();
+  final _serverHostController = TextEditingController();
+  final _middlewarePortController = TextEditingController();
+  final _servicePortController = TextEditingController();
   final _apiService = ApiService();
   bool _isLoading = false;
   bool _obscurePin = true;
 
   @override
+  void initState() {
+    super.initState();
+    _loadServerSettings();
+  }
+
+  Future<void> _loadServerSettings() async {
+    final host = await AppSettings.getServerHost();
+    final middlewarePort = await AppSettings.getMiddlewarePort();
+    final servicePort = await AppSettings.getServicePort();
+    if (!mounted) return;
+    setState(() {
+      _serverHostController.text = host;
+      _middlewarePortController.text = middlewarePort.toString();
+      _servicePortController.text = servicePort.toString();
+    });
+  }
+
+  @override
   void dispose() {
     _usernameController.dispose();
     _pinController.dispose();
+    _serverHostController.dispose();
+    _middlewarePortController.dispose();
+    _servicePortController.dispose();
     super.dispose();
+  }
+
+  int? _parsePort(String input) {
+    final port = int.tryParse(input.trim());
+    if (port == null) return null;
+    if (port < 1 || port > 65535) return null;
+    return port;
+  }
+
+  Future<void> _saveServerSettings() async {
+    final host = _serverHostController.text.trim();
+    final middlewarePort = _parsePort(_middlewarePortController.text);
+    final servicePort = _parsePort(_servicePortController.text);
+
+    if (host.isEmpty) {
+      throw Exception('Host/IP tidak boleh kosong');
+    }
+    if (middlewarePort == null) {
+      throw Exception('Port Middleware tidak valid');
+    }
+    if (servicePort == null) {
+      throw Exception('Port Service tidak valid');
+    }
+
+    await AppSettings.setServerHost(host);
+    await AppSettings.setMiddlewarePort(middlewarePort);
+    await AppSettings.setServicePort(servicePort);
+  }
+
+  void _showServerSettingsSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(24),
+            topRight: Radius.circular(24),
+          ),
+        ),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Server Settings',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.primaryBlue,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Masukkan IP laptop agar HP bisa akses API.\nContoh: 192.168.1.10',
+                style: TextStyle(fontSize: 13, color: AppColors.grey),
+              ),
+              const SizedBox(height: 16),
+
+              TextField(
+                controller: _serverHostController,
+                decoration: InputDecoration(
+                  labelText: 'Host / IP',
+                  hintText: '192.168.1.10',
+                  prefixIcon: const Icon(Icons.dns_outlined, color: AppColors.primaryBlue),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: AppColors.lightGrey),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: AppColors.lightGrey),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: AppColors.primaryBlue, width: 2),
+                  ),
+                  filled: true,
+                  fillColor: AppColors.backgroundGrey,
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _middlewarePortController,
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      decoration: InputDecoration(
+                        labelText: 'Port Middleware',
+                        hintText: '8000',
+                        prefixIcon: const Icon(Icons.settings_ethernet, color: AppColors.primaryBlue),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: AppColors.lightGrey),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: AppColors.lightGrey),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: AppColors.primaryBlue, width: 2),
+                        ),
+                        filled: true,
+                        fillColor: AppColors.backgroundGrey,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: TextField(
+                      controller: _servicePortController,
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      decoration: InputDecoration(
+                        labelText: 'Port Service',
+                        hintText: '8001',
+                        prefixIcon: const Icon(Icons.settings_input_component, color: AppColors.primaryBlue),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: AppColors.lightGrey),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: AppColors.lightGrey),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: AppColors.primaryBlue, width: 2),
+                        ),
+                        filled: true,
+                        fillColor: AppColors.backgroundGrey,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 16),
+
+              FutureBuilder<String>(
+                future: AppSettings.getMiddlewareBaseUrl(),
+                builder: (context, snapshot) {
+                  final text = snapshot.data ?? '...';
+                  return Text(
+                    'Middleware URL: $text',
+                    style: const TextStyle(fontSize: 12, color: AppColors.grey),
+                  );
+                },
+              ),
+              const SizedBox(height: 16),
+
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () async {
+                        await AppSettings.resetToDefaults();
+                        await _loadServerSettings();
+                        if (!context.mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: const Text('Server direset ke default (localhost).'),
+                            backgroundColor: AppColors.warning,
+                            behavior: SnackBarBehavior.floating,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          ),
+                        );
+                      },
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        side: const BorderSide(color: AppColors.lightGrey),
+                      ),
+                      child: const Text('Reset'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        try {
+                          await _saveServerSettings();
+                          final url = await AppSettings.getMiddlewareBaseUrl();
+                          if (!context.mounted) return;
+                          Navigator.pop(context);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Server disimpan: $url'),
+                              backgroundColor: AppColors.success,
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            ),
+                          );
+                        } catch (e) {
+                          if (!context.mounted) return;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(e.toString()),
+                              backgroundColor: AppColors.error,
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            ),
+                          );
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryBlue,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        elevation: 0,
+                      ),
+                      child: const Text(
+                        'Simpan',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   Future<void> _handleLogin() async {
@@ -33,7 +302,7 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final result = await _apiService.login(
+      await _apiService.login(
         _usernameController.text,
         _pinController.text,
       );
@@ -352,10 +621,18 @@ class _LoginScreenState extends State<LoginScreen> {
                         color: Color.fromARGB(255, 1, 89, 253),
                       ),
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () => Navigator.pop(context),
-                    ),
+                    Row(
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.settings),
+                          onPressed: () => _showServerSettingsSheet(context),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close),
+                          onPressed: () => Navigator.pop(context),
+                        ),
+                      ],
+                    )
                   ],
                 ),
                 const SizedBox(height: 8),

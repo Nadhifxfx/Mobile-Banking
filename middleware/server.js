@@ -7,10 +7,13 @@
 
 require('dotenv').config();
 const express = require('express');
+const http = require('http');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
+const { Server } = require('socket.io');
+const jwt = require('jsonwebtoken');
 
 // Import routes
 const authRoutes = require('./routes/auth');
@@ -117,7 +120,57 @@ app.use((err, req, res, next) => {
 
 // ===== Start Server =====
 
-const server = app.listen(PORT, '0.0.0.0', () => {
+const server = http.createServer(app);
+
+// ===== Realtime (Socket.IO) =====
+
+const io = new Server(server, {
+  cors: {
+    origin: '*',
+    credentials: true
+  }
+});
+
+// Make io available in request handlers (routes)
+app.set('io', io);
+
+// Authenticate socket connections using the same JWT_SECRET
+io.use((socket, next) => {
+  try {
+    const token =
+      socket.handshake.auth?.token ||
+      socket.handshake.query?.token ||
+      socket.handshake.headers?.authorization?.toString()?.replace(/^Bearer\s+/i, '');
+
+    if (!token) {
+      return next(new Error('Unauthorized'));
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    socket.data.user = {
+      customer_id: decoded.customer_id,
+      username: decoded.username,
+      cif_number: decoded.cif_number
+    };
+
+    next();
+  } catch (err) {
+    next(new Error('Unauthorized'));
+  }
+});
+
+io.on('connection', (socket) => {
+  const user = socket.data.user;
+  if (user?.customer_id != null) {
+    socket.join(`customer:${user.customer_id}`);
+  }
+
+  socket.on('disconnect', () => {
+    // no-op
+  });
+});
+
+server.listen(PORT, '0.0.0.0', () => {
   console.log('🚀 Mobile Banking Middleware Server');
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   console.log(`📡 Server running on: http://localhost:${PORT}`);

@@ -24,6 +24,9 @@ dependencies:
   # Local Storage untuk JWT Token
   shared_preferences: ^2.2.0
   flutter_secure_storage: ^9.0.0
+
+  # Realtime updates
+  socket_io_client: ^2.0.3
   
   # JSON Serialization
   json_annotation: ^4.8.0

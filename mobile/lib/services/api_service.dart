@@ -1,12 +1,19 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'app_settings.dart';
 import '../utils/constants.dart';
 
 class ApiService {
   static final ApiService _instance = ApiService._internal();
   factory ApiService() => _instance;
   ApiService._internal();
+
+  Future<Uri> _middlewareUri(String path) async {
+    final base = await AppSettings.getMiddlewareBaseUrl();
+    final normalizedPath = path.startsWith('/') ? path : '/$path';
+    return Uri.parse('$base$normalizedPath');
+  }
 
   // Get stored JWT token
   Future<String?> getToken() async {
@@ -88,7 +95,7 @@ class ApiService {
   Future<Map<String, dynamic>> login(String username, String pin) async {
     try {
       final response = await http.post(
-        Uri.parse('${ApiConstants.middlewareBaseUrl}${ApiConstants.loginEndpoint}'),
+        await _middlewareUri(ApiConstants.loginEndpoint),
         headers: await getHeaders(needsAuth: false),
         body: jsonEncode({
           'username': username,
@@ -125,7 +132,7 @@ class ApiService {
   }) async {
     try {
       final response = await http.post(
-        Uri.parse('${ApiConstants.middlewareBaseUrl}${ApiConstants.registerEndpoint}'),
+        await _middlewareUri(ApiConstants.registerEndpoint),
         headers: await getHeaders(needsAuth: false),
         body: jsonEncode({
           'customer_name': name,
@@ -163,7 +170,7 @@ class ApiService {
   Future<Map<String, dynamic>> getBalance() async {
     try {
       final response = await http.get(
-        Uri.parse('${ApiConstants.middlewareBaseUrl}/account/balance'),
+        await _middlewareUri('/account/balance'),
         headers: await getHeaders(),
       );
 
@@ -181,7 +188,7 @@ class ApiService {
   Future<List<dynamic>> getTransactions() async {
     try {
       final response = await http.get(
-        Uri.parse('${ApiConstants.middlewareBaseUrl}/transaction/history'),
+        await _middlewareUri('/transaction/history'),
         headers: await getHeaders(),
       );
 
@@ -206,7 +213,7 @@ class ApiService {
   }) async {
     try {
       final response = await http.post(
-        Uri.parse('${ApiConstants.middlewareBaseUrl}/transaction/transfer'),
+        await _middlewareUri('/transaction/transfer'),
         headers: await getHeaders(),
         body: jsonEncode({
           'from_account': fromAccount,
@@ -236,7 +243,7 @@ class ApiService {
   }) async {
     try {
       final response = await http.post(
-        Uri.parse('${ApiConstants.middlewareBaseUrl}/transaction/withdraw'),
+        await _middlewareUri('/transaction/withdraw'),
         headers: await getHeaders(),
         body: jsonEncode({
           'account_number': accountNumber,
@@ -264,7 +271,7 @@ class ApiService {
   }) async {
     try {
       final response = await http.post(
-        Uri.parse('${ApiConstants.middlewareBaseUrl}/transaction/deposit'),
+        await _middlewareUri('/transaction/deposit'),
         headers: await getHeaders(),
         body: jsonEncode({
           'account_number': accountNumber,
@@ -299,7 +306,7 @@ class ApiService {
       }
 
       final response = await http.put(
-        Uri.parse('${ApiConstants.middlewareBaseUrl}/customer/pin'),
+        await _middlewareUri('/customer/pin'),
         headers: await getHeaders(),
         body: jsonEncode(body),
       );
