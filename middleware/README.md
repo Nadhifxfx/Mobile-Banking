@@ -1,6 +1,6 @@
-# 🔧 Mobile Banking Middleware Layer
+# 🔧 BANK SAE Middleware Layer
 
-Middleware layer untuk Mobile Banking System - Handles authentication, business logic, dan routing ke Service Layer.
+Middleware layer untuk BANK SAE System - Handles authentication, business logic, dan routing ke Service Layer.
 
 ## 🏗️ Architecture
 

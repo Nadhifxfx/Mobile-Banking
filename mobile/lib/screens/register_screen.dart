@@ -115,7 +115,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       onPressed: () => Navigator.pop(context),
                     ),
                     const SizedBox(width: 8),
-                    // Logo SAE Bank
+                    // Logo BANK SAE
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
@@ -123,7 +123,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: const Text(
-                        'SAE BANK',
+                        'BANK SAE',
                         style: TextStyle(
                           color: AppColors.primaryBlue,
                           fontWeight: FontWeight.bold,

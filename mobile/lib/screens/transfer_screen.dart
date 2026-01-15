@@ -21,7 +21,7 @@ class _TransferScreenState extends State<TransferScreen> {
 
   int _currentStep = 0; // 0: input account, 1: input amount, 2: input PIN, 3: success
   String? _selectedFromAccount;
-  String _selectedBank = 'SAE BANK';
+  String _selectedBank = 'BANK SAE';
   final String _selectedMethod = 'Transfer SAE Fast';
   String _selectedInputType = 'No. Rekening';
   String? _destinationAccountName;
@@ -29,7 +29,7 @@ class _TransferScreenState extends State<TransferScreen> {
   bool _isSubmitting = false;
   List<dynamic> _accounts = [];
   final List<String> _bankList = [
-    'SAE BANK',
+    'BANK SAE',
     'BCA - Bank Central Asia',
     'BRI - Bank Rakyat Indonesia',
     'Mandiri - Bank Mandiri',
@@ -43,11 +43,11 @@ class _TransferScreenState extends State<TransferScreen> {
   
   // Data dummy untuk setiap bank
   final Map<String, List<Map<String, String>>> _bankAccounts = {
-    'SAE BANK': [
-      {'account': '1234567890', 'name': 'Nadhif', 'bank': 'SAE BANK'},
-      {'account': '5898452955', 'name': 'Udin', 'bank': 'SAE BANK'},
-      {'account': '3533834869', 'name': 'Baqik', 'bank': 'SAE BANK'},
-      {'account': '9876543210', 'name': 'Rafli', 'bank': 'SAE BANK'},
+    'BANK SAE': [
+      {'account': '1234567890', 'name': 'Nadhif', 'bank': 'BANK SAE'},
+      {'account': '5898452955', 'name': 'Udin', 'bank': 'BANK SAE'},
+      {'account': '3533834869', 'name': 'Baqik', 'bank': 'BANK SAE'},
+      {'account': '9876543210', 'name': 'Rafli', 'bank': 'BANK SAE'},
     ],
     'BCA - Bank Central Asia': [
       {'account': '1234567890', 'name': 'Ahmad BCA', 'bank': 'BCA'},
@@ -225,11 +225,11 @@ class _TransferScreenState extends State<TransferScreen> {
       return;
     }
 
-    // Check if selected bank is SAE BANK
-    if (_selectedBank != 'SAE BANK') {
+    // Check if selected bank is BANK SAE
+    if (_selectedBank != 'BANK SAE') {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Transfer hanya dapat dilakukan ke sesama SAE BANK. Silakan pilih SAE BANK sebagai bank tujuan.'),
+          content: Text('Transfer hanya dapat dilakukan ke sesama BANK SAE. Silakan pilih BANK SAE sebagai bank tujuan.'),
           backgroundColor: Colors.red,
           duration: Duration(seconds: 3),
         ),
@@ -391,11 +391,11 @@ class _TransferScreenState extends State<TransferScreen> {
             }).toList(),
             onChanged: (value) => setState(() => _selectedBank = value!),
           ),
-          if (_selectedBank != 'SAE BANK')
+          if (_selectedBank != 'BANK SAE')
             Padding(
               padding: const EdgeInsets.only(top: 4),
               child: Text(
-                '* Transfer antar bank akan segera hadir. Saat ini hanya tersedia transfer ke sesama SAE BANK.',
+                '* Transfer antar bank akan segera hadir. Saat ini hanya tersedia transfer ke sesama BANK SAE.',
                 style: TextStyle(fontSize: 11, color: Colors.orange[700], fontStyle: FontStyle.italic),
               ),
             ),

@@ -1,4 +1,4 @@
-# 🏦 Sistem Mobile Banking (SAE BANK)
+# 🏦 Sistem Mobile Banking (BANK SAE)
 =======
 
 **Last Updated:** 16 Januari 2026
@@ -30,7 +30,7 @@ Tujuan proyek ini: memudahkan belajar alur aplikasi perbankan sederhana (login, 
 
 ## 🧾 Gambaran Singkat (untuk orang awam)
 
-Bayangkan ada aplikasi “Mobile Banking” yang bisa:
+Fitur pada aplikasi BANK SAE:
 
 - Login/daftar
 - Cek saldo
@@ -346,4 +346,4 @@ MIT License
 
 ---
 
-**SAE BANK! 🏦💰**
+**BANK SAE! 🏦💰**

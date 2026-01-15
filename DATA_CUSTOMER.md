@@ -54,14 +54,14 @@ Berikut adalah daftar user dummy yang hardcoded dalam aplikasi (`mobile/lib/scre
 
 | Nama Customer | Bank | Nomor Rekening | Keterangan |
 | :--- | :--- | :--- | :--- |
-| **Nadhif** | SAE BANK | `1234567890` | User Internal / Tujuan Transfer |
-| **Baqik** | SAE BANK | `3533834869` | User Internal / Tujuan Transfer |
-| **Udin** | SAE BANK | `5898452955` | User Internal / Tujuan Transfer |
-| **Rafli** | SAE BANK | `9876543210` | User Internal / Tujuan Transfer |
+| **Nadhif** | BANK SAE | `1234567890` | User Internal / Tujuan Transfer |
+| **Baqik** | BANK SAE | `3533834869` | User Internal / Tujuan Transfer |
+| **Udin** | BANK SAE | `5898452955` | User Internal / Tujuan Transfer |
+| **Rafli** | BANK SAE | `9876543210` | User Internal / Tujuan Transfer |
 
 ### User Dummy Bank Lain (Eksternal)
 
-Selain user internal SAE BANK, terdapat juga data dummy untuk bank lain:
+Selain user internal BANK SAE, terdapat juga data dummy untuk bank lain:
 
 | Nama Customer | Bank | Nomor Rekening |
 | :--- | :--- | :--- |

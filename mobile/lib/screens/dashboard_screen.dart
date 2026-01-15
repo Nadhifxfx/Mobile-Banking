@@ -63,7 +63,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       'type': type.isEmpty ? 'Transfer' : type,
       'account': account ?? '',
       'name': txn['name']?.toString(),
-      'bank': (txn['bank'] ?? 'SAE BANK').toString(),
+      'bank': (txn['bank'] ?? 'BANK SAE').toString(),
       'amount': amount,
       'date': (txn['date'] ?? txn['transaction_date'] ?? DateTime.now().toIso8601String()).toString(),
       'status': (txn['status'] ?? 'SUCCESS').toString(),
@@ -205,7 +205,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: const Text(
-                                      'SAE BANK',
+                                      'BANK SAE',
                                       style: TextStyle(
                                         color: AppColors.primaryBlue,
                                         fontWeight: FontWeight.bold,
@@ -650,7 +650,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        'SAE BANK',
+                                        'BANK SAE',
                                         style: TextStyle(
                                           color: Colors.white.withOpacity(0.9),
                                           fontSize: 16,

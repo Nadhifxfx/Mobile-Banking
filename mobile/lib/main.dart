@@ -11,7 +11,7 @@ class MobileBankingApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Mobile Banking',
+      title: 'BANK SAE',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
@@ -47,7 +47,7 @@ class SplashScreen extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             const Text(
-              'Mobile Banking',
+              'BANK SAE',
               style: TextStyle(
                 fontSize: 32,
                 fontWeight: FontWeight.bold,

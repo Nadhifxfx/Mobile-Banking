@@ -1,5 +1,5 @@
 /**
- * Mobile Banking Middleware Server
+ * BANK SAE Middleware Server
  * Port: 3000
  * 
  * Handles authentication, business logic, and routes requests to Service Layer
@@ -67,7 +67,7 @@ app.use('/api/', limiter);
 app.get('/health', (req, res) => {
   res.json({
     status: 'healthy',
-    service: 'Mobile Banking Middleware',
+    service: 'BANK SAE Middleware',
     version: '1.0.0',
     timestamp: new Date().toISOString(),
     service_layer: process.env.SERVICE_LAYER_URL
@@ -83,7 +83,7 @@ app.use('/api/v1/customer', customerRoutes);
 // Root endpoint
 app.get('/', (req, res) => {
   res.json({
-    message: 'Mobile Banking Middleware API',
+    message: 'BANK SAE Middleware API',
     version: '1.0.0',
     endpoints: {
       health: '/health',
@@ -171,7 +171,7 @@ io.on('connection', (socket) => {
 });
 
 server.listen(PORT, '0.0.0.0', () => {
-  console.log('🚀 Mobile Banking Middleware Server');
+  console.log('🚀 BANK SAE Middleware Server');
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   console.log(`📡 Server running on: http://localhost:${PORT}`);
   console.log(`🔗 Service Layer: ${process.env.SERVICE_LAYER_URL}`);

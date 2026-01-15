@@ -1,6 +1,6 @@
-# Mobile Banking Service Layer
+# BANK SAE Service Layer
 
-REST API Service untuk operasi database Mobile Banking System. Service layer ini berinteraksi langsung dengan PostgreSQL database dan menyediakan endpoint yang digunakan oleh Middleware layer.
+REST API Service untuk operasi database BANK SAE System. Service layer ini berinteraksi langsung dengan PostgreSQL database dan menyediakan endpoint yang digunakan oleh Middleware layer.
 
 ## 🏗 Arsitektur
 
@@ -230,7 +230,7 @@ service/
 
 ## 📝 License
 
-Mobile Banking Service Layer - Internal Project
+BANK SAE Service Layer - Internal Project
 
 ---
 
