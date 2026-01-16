@@ -10,6 +10,20 @@ const bcrypt = require('bcryptjs');
 const serviceLayer = require('../services/serviceLayerClient');
 const authenticate = require('../authenticate');
 
+// Demo nickname mapping (see DATA_CUSTOMER.md)
+const DEMO_NICKNAME_BY_ACCOUNT = {
+  '1234567890': 'Nadhif',
+  '3533834869': 'Baqik',
+  '5898452955': 'Udin',
+  '9876543210': 'Rafli'
+};
+
+const resolveDemoNickname = (accountNumber) => {
+  if (!accountNumber) return null;
+  const key = accountNumber.toString();
+  return DEMO_NICKNAME_BY_ACCOUNT[key] ?? null;
+};
+
 // All routes require authentication
 router.use(authenticate);
 
@@ -55,6 +69,7 @@ router.post('/transfer',
 
       // 3. Verify destination account exists
       const destAccount = await serviceLayer.getAccountByNumber(to_account);
+      const destNickname = resolveDemoNickname(to_account) || destAccount?.account_name;
 
       // 4. Check balance
       const balance = await serviceLayer.getAccountBalance(from_account);
@@ -90,7 +105,7 @@ router.post('/transfer',
           // Activity format (used by dashboard)
           type: 'Transfer',
           account: to_account,
-          name: destAccount?.account_name,
+          name: destNickname,
           bank: 'BANK SAE',
           amount: amount,
           date: transaction.transaction_date || transaction.created_at || new Date().toISOString(),
@@ -119,7 +134,7 @@ router.post('/transfer',
           amount: amount,
           from: from_account,
           to: to_account,
-          to_name: destAccount.account_name,
+          to_name: destNickname,
           description: description,
           date: transaction.transaction_date || transaction.created_at,
           new_balance: newBalance.available_balance || newBalance['available_balance'] || 0
@@ -354,18 +369,53 @@ router.get('/history', async (req, res) => {
       parseInt(limit)
     );
 
-    // Format response
-    const formattedTransactions = transactions.map(txn => ({
-      id: txn.id,
-      type: txn.transaction_type === 'TR' ? 'Transfer' : 
-            txn.transaction_type === 'WD' ? 'Withdrawal' : 'Deposit',
-      amount: txn.transaction_amount,
-      from_account: txn.from_account_number,
-      to_account: txn.to_account_number,
-      status: txn.status,
-      description: txn.description,
-      date: txn.transaction_date || txn.created_at
-    }));
+    const safeGetCounterpartyName = async (accountNumber) => {
+      if (!accountNumber) return null;
+      const demo = resolveDemoNickname(accountNumber);
+      if (demo) return demo;
+      try {
+        const acc = await serviceLayer.getAccountByNumber(accountNumber);
+        return acc?.account_name ?? null;
+      } catch (_) {
+        return null;
+      }
+    };
+
+    // Format response (enriched with names for nicer UI)
+    const formattedTransactions = await Promise.all(
+      transactions.map(async (txn) => {
+        const code = txn.transaction_type;
+
+        const from_account = txn.from_account_number;
+        const to_account = txn.to_account_number;
+
+        const counterparty_account =
+          code === 'TR' ? to_account :
+          code === 'DP' ? to_account :
+          code === 'WD' ? from_account :
+          null;
+
+        const counterparty_name = await safeGetCounterpartyName(counterparty_account);
+
+        return {
+          id: txn.id,
+          type: code === 'TR' ? 'Transfer' : code === 'WD' ? 'Withdrawal' : 'Deposit',
+          amount: txn.transaction_amount,
+          from_account,
+          to_account,
+
+          // Optional enrichment
+          from_name: code === 'WD' ? counterparty_name : null,
+          to_name: code === 'TR' || code === 'DP' ? counterparty_name : null,
+          counterparty_account,
+          counterparty_name,
+
+          status: txn.status,
+          description: txn.description,
+          date: txn.transaction_date || txn.created_at
+        };
+      })
+    );
 
     res.json({
       status: 'success',

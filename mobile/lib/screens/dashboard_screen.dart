@@ -29,6 +29,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
   int _currentIndex = 0;
   List<Map<String, String>> _savedContacts = [];
   List<Map<String, dynamic>> _recentTransactions = [];
+  String? _lookupNicknameForAccount(String? account) {
+    if (account == null || account.isEmpty) return null;
+    for (final contact in _savedContacts) {
+      if (contact['account'] == account) return contact['name'];
+    }
+    return null;
+  }
 
   @override
   void initState() {
@@ -36,6 +43,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _loadUserName();
     _loadData();
     _loadSavedData();
+    _loadRecentTransactionsFromApi();
 
     // Realtime updates for "Transaksi Terbaru"
     RealtimeService.instance.connect();
@@ -56,11 +64,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ? rawAmount.toDouble()
         : (double.tryParse(rawAmount.toString()) ?? 0);
 
-    final type = (txn['type'] ?? '').toString();
+    final type = (txn['type'] ?? txn['transaction_type'] ?? '').toString();
     final account = (txn['account'] ?? txn['to_account_number'] ?? txn['from_account_number'])?.toString();
 
+    final normalizedType = _normalizeActivityType(type);
+
     final normalized = <String, dynamic>{
-      'type': type.isEmpty ? 'Transfer' : type,
+      'id': txn['id'],
+      'type': normalizedType,
       'account': account ?? '',
       'name': txn['name']?.toString(),
       'bank': (txn['bank'] ?? 'BANK SAE').toString(),
@@ -70,10 +81,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     };
 
     setState(() {
-      _recentTransactions.insert(0, normalized);
-      if (_recentTransactions.length > 20) {
-        _recentTransactions = _recentTransactions.sublist(0, 20);
-      }
+      _upsertRecentTransaction(normalized);
     });
 
     try {
@@ -81,6 +89,99 @@ class _DashboardScreenState extends State<DashboardScreen> {
       await prefs.setString('recent_transactions', jsonEncode(_recentTransactions));
     } catch (_) {
       // ignore
+    }
+  }
+
+  String _normalizeActivityType(String raw) {
+    final upper = raw.toUpperCase();
+    if (upper == 'DP' || upper == 'DEPOSIT') return 'Setor Tunai';
+    if (upper == 'WD' || upper == 'WITHDRAWAL') return 'Tarik Tunai';
+    if (upper == 'TR' || upper == 'TRANSFER') return 'Transfer';
+
+    final lower = raw.toLowerCase();
+    if (lower.contains('setor') || lower.contains('deposit')) return 'Setor Tunai';
+    if (lower.contains('tarik') || lower.contains('withdraw')) return 'Tarik Tunai';
+    if (lower.contains('transfer')) return 'Transfer';
+    return raw.isEmpty ? 'Transfer' : raw;
+  }
+
+  DateTime _parseTxnDate(dynamic value) {
+    if (value == null) return DateTime.now();
+    try {
+      return DateTime.parse(value.toString());
+    } catch (_) {
+      return DateTime.now();
+    }
+  }
+
+  void _upsertRecentTransaction(Map<String, dynamic> normalized) {
+    final incomingId = normalized['id']?.toString();
+    if (incomingId != null && incomingId.isNotEmpty) {
+      _recentTransactions.removeWhere((t) => t['id']?.toString() == incomingId);
+    }
+
+    _recentTransactions.insert(0, normalized);
+    _recentTransactions.sort((a, b) => _parseTxnDate(b['date']).compareTo(_parseTxnDate(a['date'])));
+
+    if (_recentTransactions.length > 50) {
+      _recentTransactions = _recentTransactions.sublist(0, 50);
+    }
+  }
+
+  Future<void> _loadRecentTransactionsFromApi() async {
+    try {
+      final transactions = await _apiService.getTransactions();
+      final normalized = transactions
+          .whereType<Map>()
+          .map((t) {
+            final txn = Map<String, dynamic>.from(t);
+            final type = _normalizeActivityType((txn['type'] ?? txn['transaction_type'] ?? '').toString());
+            final account = (type == 'Transfer'
+                    ? (txn['to_account'] ?? txn['to_account_number'] ?? txn['from_account'] ?? txn['from_account_number'])
+                    : type == 'Setor Tunai'
+                        ? (txn['to_account'] ?? txn['to_account_number'] ?? txn['account'] ?? txn['account_number'])
+                        : (txn['from_account'] ?? txn['from_account_number'] ?? txn['account'] ?? txn['account_number']))
+                .toString();
+            final amountRaw = txn['amount'] ?? txn['transaction_amount'] ?? 0;
+            final amount = amountRaw is num
+                ? amountRaw.toDouble()
+                : (double.tryParse(amountRaw.toString()) ?? 0);
+
+            final enrichedName = (txn['to_name'] ?? txn['from_name'] ?? txn['counterparty_name'])?.toString();
+            final name = (txn['name']?.toString().isNotEmpty == true)
+              ? txn['name']?.toString()
+              : (enrichedName != null && enrichedName.isNotEmpty)
+                ? enrichedName
+                : _lookupNicknameForAccount(account);
+
+            return <String, dynamic>{
+              'id': txn['id'],
+              'type': type,
+              'account': account,
+              'name': name,
+              'bank': (txn['bank'] ?? 'BANK SAE').toString(),
+              'amount': amount,
+              'date': (txn['date'] ?? txn['transaction_date'] ?? DateTime.now().toIso8601String()).toString(),
+              'status': (txn['status'] ?? 'SUCCESS').toString(),
+            };
+          })
+          .toList();
+
+      if (!mounted) return;
+      setState(() {
+        for (final txn in normalized) {
+          _upsertRecentTransaction(txn);
+        }
+      });
+
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('recent_transactions', jsonEncode(_recentTransactions));
+      } catch (_) {
+        // ignore
+      }
+    } catch (_) {
+      // ignore: keep UI responsive even if history fetch fails
     }
   }
 
@@ -436,7 +537,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     // Transfer
                                     icon = Icons.arrow_upward;
                                     iconColor = AppColors.briOrange;
-                                    title = 'Transfer ke ${transaction['name'] ?? 'Unknown'}';
+                                    final account = transaction['account']?.toString();
+                                    final name = (transaction['name']?.toString().isNotEmpty == true)
+                                        ? transaction['name']?.toString()
+                                        : _lookupNicknameForAccount(account);
+                                    final target = (name ?? account ?? '').toString();
+                                    title = target.isEmpty ? 'Transfer' : 'Transfer ke $target';
                                     amountColor = Colors.red;
                                     amountPrefix = '- ';
                                   }
@@ -504,88 +610,116 @@ class _DashboardScreenState extends State<DashboardScreen> {
     } else if (_currentIndex == 1) {
       return Scaffold(
         backgroundColor: AppColors.backgroundGrey,
-        body: CustomScrollView(
-          slivers: [
-            SliverAppBar(
-              expandedHeight: 120,
-              floating: false,
-              pinned: true,
-              backgroundColor: AppColors.primaryBlue,
-              flexibleSpace: FlexibleSpaceBar(
-                title: const Text('Aktivitas', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                background: Container(
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [AppColors.primaryBlue, AppColors.secondaryBlue],
+        body: RefreshIndicator(
+          onRefresh: () async {
+            await _loadData();
+            await _loadRecentTransactionsFromApi();
+          },
+          color: AppColors.primaryBlue,
+          child: CustomScrollView(
+            slivers: [
+              SliverAppBar(
+                expandedHeight: 120,
+                floating: false,
+                pinned: true,
+                backgroundColor: AppColors.primaryBlue,
+                flexibleSpace: FlexibleSpaceBar(
+                  title: const Text('Aktivitas', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                  background: Container(
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [AppColors.primaryBlue, AppColors.secondaryBlue],
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Semua Transaksi', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.darkGrey)),
-                    const SizedBox(height: 12),
-                    _buildTransactionItem(
-                      icon: Icons.arrow_upward,
-                      iconColor: AppColors.briOrange,
-                      title: 'Transfer ke Udin',
-                      date: '5 Jan 2026, 10:30',
-                      amount: '- Rp 50.000',
-                      amountColor: Colors.red,
-                      status: 'Sukses',
-                    ),
-                    const SizedBox(height: 8),
-                    _buildTransactionItem(
-                      icon: Icons.arrow_downward,
-                      iconColor: Colors.green,
-                      title: 'Diterima dari Baqik',
-                      date: '4 Jan 2026, 14:20',
-                      amount: '+ Rp 100.000',
-                      amountColor: Colors.green,
-                      status: 'Sukses',
-                    ),
-                    const SizedBox(height: 8),
-                    _buildTransactionItem(
-                      icon: Icons.arrow_upward,
-                      iconColor: AppColors.briOrange,
-                      title: 'Transfer ke Rafli',
-                      date: '3 Jan 2026, 09:15',
-                      amount: '- Rp 75.000',
-                      amountColor: Colors.red,
-                      status: 'Sukses',
-                    ),
-                    const SizedBox(height: 8),
-                    _buildTransactionItem(
-                      icon: Icons.atm,
-                      iconColor: AppColors.primaryBlue,
-                      title: 'Tarik Tunai ATM',
-                      date: '2 Jan 2026, 15:45',
-                      amount: '- Rp 200.000',
-                      amountColor: Colors.red,
-                      status: 'Sukses',
-                    ),
-                    const SizedBox(height: 8),
-                    _buildTransactionItem(
-                      icon: Icons.arrow_downward,
-                      iconColor: Colors.green,
-                      title: 'Diterima dari Nadhif',
-                      date: '1 Jan 2026, 11:20',
-                      amount: '+ Rp 150.000',
-                      amountColor: Colors.green,
-                      status: 'Sukses',
-                    ),
-                  ],
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Semua Transaksi', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.darkGrey)),
+                      const SizedBox(height: 12),
+                      if (_recentTransactions.isEmpty)
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 24),
+                          child: Center(
+                            child: Text('Belum ada aktivitas.', style: TextStyle(color: AppColors.grey)),
+                          ),
+                        )
+                      else
+                        Column(
+                          children: _recentTransactions.map((transaction) {
+                            final amountRaw = transaction['amount'] ?? 0;
+                            final amount = amountRaw is num
+                                ? amountRaw.toDouble()
+                                : (double.tryParse(amountRaw.toString()) ?? 0);
+
+                            final timestamp = _parseTxnDate(transaction['date'] ?? transaction['timestamp']);
+                            final formattedDate = '${timestamp.day} ${_getMonthName(timestamp.month)} ${timestamp.year}, ${timestamp.hour.toString().padLeft(2, '0')}:${timestamp.minute.toString().padLeft(2, '0')}';
+
+                            final transactionType = _normalizeActivityType((transaction['type'] ?? '').toString());
+
+                            IconData icon;
+                            Color iconColor;
+                            String title;
+                            Color amountColor;
+                            String amountPrefix;
+
+                            if (transactionType == 'Setor Tunai') {
+                              icon = Icons.arrow_downward;
+                              iconColor = Colors.green;
+                              title = 'Setor Tunai';
+                              amountColor = Colors.green;
+                              amountPrefix = '+ ';
+                            } else if (transactionType == 'Tarik Tunai') {
+                              icon = Icons.atm;
+                              iconColor = AppColors.primaryBlue;
+                              title = 'Tarik Tunai';
+                              amountColor = Colors.red;
+                              amountPrefix = '- ';
+                            } else {
+                              icon = Icons.arrow_upward;
+                              iconColor = AppColors.briOrange;
+                              final account = transaction['account']?.toString();
+                              final name = (transaction['name']?.toString().isNotEmpty == true)
+                                  ? transaction['name']?.toString()
+                                  : _lookupNicknameForAccount(account);
+                              final target = (name ?? account ?? '').toString();
+                              title = target.isEmpty ? 'Transfer' : 'Transfer ke $target';
+                              amountColor = Colors.red;
+                              amountPrefix = '- ';
+                            }
+
+                            final status = (transaction['status'] ?? '').toString();
+                            final statusLabel = status.isEmpty
+                                ? null
+                                : (status.toUpperCase() == 'SUCCESS' ? 'Sukses' : status);
+
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: _buildTransactionItem(
+                                icon: icon,
+                                iconColor: iconColor,
+                                title: title,
+                                date: formattedDate,
+                                amount: '$amountPrefix Rp ${_formatCurrency(amount)}',
+                                amountColor: amountColor,
+                                status: statusLabel,
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       );
     } else if (_currentIndex == 3) {

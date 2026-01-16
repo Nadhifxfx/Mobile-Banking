@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../services/realtime_service.dart';
 import 'dart:async';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});
@@ -16,10 +18,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
   bool _isLoading = true;
   String? _error;
   StreamSubscription<Map<String, dynamic>>? _txnSub;
+  final Map<String, String> _nicknameByAccount = {};
 
   @override
   void initState() {
     super.initState();
+    _loadNicknames();
     _loadTransactions();
 
     // Realtime updates
@@ -30,6 +34,60 @@ class _HistoryScreenState extends State<HistoryScreen> {
         _transactions.insert(0, event);
       });
     });
+  }
+
+  Future<void> _loadNicknames() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final contactsJson = prefs.getString('saved_contacts');
+      if (contactsJson == null) return;
+
+      final decoded = jsonDecode(contactsJson);
+      if (decoded is! List) return;
+
+      for (final item in decoded) {
+        if (item is! Map) continue;
+        final map = Map<String, dynamic>.from(item);
+        final account = map['account']?.toString();
+        final name = map['name']?.toString();
+        if (account == null || account.isEmpty) continue;
+        if (name == null || name.isEmpty) continue;
+        _nicknameByAccount.putIfAbsent(account, () => name);
+      }
+    } catch (_) {
+      // ignore
+    }
+  }
+
+  String? _nicknameForAccount(dynamic account) {
+    final key = account?.toString();
+    if (key == null || key.isEmpty) return null;
+    return _nicknameByAccount[key];
+  }
+
+  String _transferTitle(Map<String, dynamic> txn, dynamic toAccount) {
+    final enriched = (txn['to_name'] ?? txn['counterparty_name'] ?? txn['name'])?.toString();
+    if (enriched != null && enriched.isNotEmpty) {
+      return 'Transfer ke $enriched';
+    }
+
+    final desc = (txn['description'] ?? '').toString();
+    final destAccount = toAccount?.toString();
+
+    // If description already contains a destination, try to replace numeric account with nickname.
+    if (desc.toLowerCase().startsWith('transfer ke ')) {
+      final tail = desc.substring('transfer ke '.length).trim();
+      if (RegExp(r'^\d+$').hasMatch(tail)) {
+        final nickname = _nicknameForAccount(tail);
+        if (nickname != null) return 'Transfer ke $nickname';
+      }
+      return desc;
+    }
+
+    final nickname = _nicknameForAccount(destAccount);
+    if (nickname != null) return 'Transfer ke $nickname';
+    if (destAccount != null && destAccount.isNotEmpty) return 'Transfer ke $destAccount';
+    return 'Transfer';
   }
 
   @override
@@ -172,6 +230,14 @@ class _HistoryScreenState extends State<HistoryScreen> {
                           final fromAccount = txn['from_account_number'] ?? txn['from_account'];
                           final toAccount = txn['to_account_number'] ?? txn['to_account'];
 
+                            final title = typeCode == 'TR'
+                              ? _transferTitle(txn, toAccount)
+                              : typeCode == 'WD'
+                                ? 'Tarik Tunai'
+                                : typeCode == 'DP'
+                                  ? 'Setor Tunai'
+                                  : (txn['description']?.toString() ?? _getTransactionType(typeCode));
+
                           return Card(
                             margin: const EdgeInsets.symmetric(
                               horizontal: 16,
@@ -186,7 +252,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                                 ),
                               ),
                               title: Text(
-                                txn['description']?.toString() ?? _getTransactionType(typeCode),
+                                title,
                                 style: const TextStyle(fontWeight: FontWeight.bold),
                               ),
                               subtitle: Column(
