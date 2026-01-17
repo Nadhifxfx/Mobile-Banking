@@ -15,7 +15,7 @@ Tujuan proyek ini: memudahkan belajar alur aplikasi perbankan sederhana (login, 
 
 ## 📌 Isi Dokumen
 
-- [Gambaran Singkat (untuk orang awam)](#-gambaran-singkat-untuk-orang-awam)
+- [Gambaran Singkat](#-gambaran-singkat-untuk-orang-awam)
 - [Fitur Utama](#-fitur-utama)
 - [Arsitektur & Alur Data](#-arsitektur--alur-data)
 - [Struktur Proyek](#-struktur-proyek)
