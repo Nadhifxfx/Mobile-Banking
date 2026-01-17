@@ -28,7 +28,7 @@ Tujuan proyek ini: memudahkan belajar alur aplikasi perbankan sederhana (login, 
 
 ---
 
-## 🧾 Gambaran Singkat (untuk orang awam)
+## 🧾 Gambaran Singkat
 
 Fitur pada aplikasi BANK SAE:
 
@@ -100,10 +100,10 @@ Catatan penting: proyek ini memakai **mode demo** untuk transaksi.
 └──────────────────────┬──────────────────────┘
                               │ SQLite
                               ▼
-                      service/db/ebanking.db
+                      service/db/mobile_banking.db
 ```
 
-### Contoh Alur Transfer (bahasa sederhana)
+### Contoh Alur Transfer
 
 1. User login di Mobile App → dapat **token**.
 2. User isi data transfer di Mobile App.
