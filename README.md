@@ -100,7 +100,7 @@ Catatan penting: proyek ini memakai **mode demo** untuk transaksi.
 └──────────────────────┬──────────────────────┘
                               │ SQLite
                               ▼
-                      service/db/mobile_banking.db
+                      service/db/ebanking.db
 ```
 
 ### Contoh Alur Transfer
