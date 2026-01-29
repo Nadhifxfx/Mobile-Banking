@@ -48,6 +48,59 @@ Data yang diminta dari pengguna saat pendaftaran:
     *   Username, Email, dan CIF Number harus unik di seluruh sistem.
     *   PIN harus dikonfirmasi dua kali saat registrasi untuk menghindari kesalahan ketik.
 
+---
+
+## 📱 Akun Testing untuk Transfer
+
+### ✅ Login Credentials
+
+| Username | PIN | Nama | CIF |
+|---|---|---|---|
+| `johndoe` | `123456` | John Doe | CIF001 |
+| `janesmith` | `654321` | Jane Smith | CIF002 |
+| `testuser` | `000000` | Test User | CIF003 |
+| `nadhif` | `123456` | Nadhif | CIF004 |
+
+### 📊 Daftar Rekening Bank
+
+#### Customer 1: John Doe
+| Nomor Rekening | Nama Akun | Type | Saldo |
+|---|---|---|---|
+| **1001000001** | Savings Account - John | SAV | Rp 5.000.000 |
+| **1001000002** | Checking Account - John | CHK | Rp 2.000.000 |
+| **1001000003** | John - Business Account | BUS | Rp 15.000.000 |
+
+#### Customer 2: Jane Smith
+| Nomor Rekening | Nama Akun | Type | Saldo |
+|---|---|---|---|
+| **1002000001** | Savings Account - Jane | SAV | Rp 3.000.000 |
+| **1002000002** | Jane - Checking Account | CHK | Rp 8.000.000 |
+
+#### Customer 3: Test User
+| Nomor Rekening | Nama Akun | Type | Saldo |
+|---|---|---|---|
+| **1003000001** | Test Account | SAV | Rp 1.000.000 |
+| **1003000002** | Test - Business Account | BUS | Rp 5.000.000 |
+
+#### Customer 4: Nadhif
+| Nomor Rekening | Nama Akun | Type | Saldo |
+|---|---|---|---|
+| **1234567890** | Nadhif Savings Account | SAV | Rp 10.000.000 |
+
+### 🔄 Contoh Skenario Transfer
+
+**Transfer dari John ke Nadhif:**
+- Login: `johndoe` / `123456`
+- Dari Akun: `1001000002` (Saldo: Rp 2.000.000)
+- Ke Akun: `1234567890` (Nadhif)
+- Nominal: Rp 500.000 - Rp 1.500.000
+
+**Transfer dari Jane ke John:**
+- Login: `janesmith` / `654321`
+- Dari Akun: `1002000002` (Saldo: Rp 8.000.000)
+- Ke Akun: `1001000001`
+- Nominal: Rp 1.000.000 - Rp 3.000.000
+
 ## Data User Dummy (Development/Testing)
 
 Berikut adalah daftar user dummy yang hardcoded dalam aplikasi (`mobile/lib/screens/transfer_screen.dart` dan `dashboard_screen.dart`) yang digunakan untuk keperluan testing transfer dan tampilan :
