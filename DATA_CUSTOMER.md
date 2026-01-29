@@ -1,6 +1,6 @@
 # Data Customer Mobile Banking
 
-Dokumen ini menjelaskan struktur dan detail data customer yang digunakan dalam aplikasi Mobile Banking, termasuk perubahan terbaru.
+Dokumen ini menjelaskan struktur dan detail data customer yang digunakan dalam aplikasi Mobile Banking.
 
 ## Ringkasan Data Customer
 
@@ -8,7 +8,7 @@ Data customer mencakup informasi pribadi, kredensial keamanan, dan status akun y
 
 ## Skema Database (Backend Service)
 
-Berdasarkan model database (`service/db/models.py`), struktur tabel `m_customer` telah diperbarui sebagai berikut:
+Berdasarkan model database (`service/db/models.py`), struktur tabel `m_customer` adalah sebagai berikut:
 
 | Nama Kolom | Tipe Data | Keterangan | Aturan (Constraints) |
 | :--- | :--- | :--- | :--- |
@@ -20,7 +20,7 @@ Berdasarkan model database (`service/db/models.py`), struktur tabel `m_customer`
 | `customer_phone` | String(20) | Nomor Telepon | Wajib |
 | `cif_number` | String(20) | Customer Identification File | Unik, Wajib |
 | `failed_login_attempts` | Integer | Percobaan Login Gagal | Default: 0 |
-| `is_locked` | Boolean | Status Blokir Akun | Default: False (Tidak terkunci), dapat diubah saat proses verifikasi |
+| `is_locked` | Boolean | Status Blokir Akun | Default: False (Tidak terkunci) |
 | `last_login` | DateTime | Waktu Login Terakhir | Nullable |
 | `created_at` | DateTime | Waktu Pembuatan | Default: Current Timestamp |
 | `updated_at` | DateTime | Waktu Update Terakhir | Default: Current Timestamp |
@@ -43,11 +43,12 @@ Data yang diminta dari pengguna saat pendaftaran:
 
 ### Catatan Tambahan
 *   **CIF Number**: Kemungkinan digenerate secara otomatis oleh sistem backend pada saat user baru dibuat, karena tidak diminta pada form registrasi.
-*   **Keamanan PIN**: PIN tidak boleh disimpan dalam bentuk plain text. Pada database kolom `customer_pin` memiliki panjang 255 karakter untuk menampung hasil hash dan harus dienkripsi.
+*   **Keamanan PIN**: PIN tidak boleh disimpan dalam bentuk plain text. Pada database kolom `customer_pin` memiliki panjang 255 karakter untuk menampung hasil hash.
 *   **Validasi**:
     *   Username, Email, dan CIF Number harus unik di seluruh sistem.
     *   PIN harus dikonfirmasi dua kali saat registrasi untuk menghindari kesalahan ketik.
 
+---
 
 ## 📱 Akun Testing untuk Transfer
 
